@@ -5,11 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	nanomsg "github.com/op/go-nanomsg"
+	"infra/sysd/iptables"
 	"infra/sysd/sysdCommonDefs"
 	"os"
 	"os/signal"
 	"syscall"
+	"sysd"
 	"utils/logging"
+)
+
+const (
+	SYSD_TOTAL_DB_USERS = 2
 )
 
 type GlobalLoggingConfig struct {
@@ -26,15 +32,23 @@ type SYSDServer struct {
 	GlobalLoggingConfigCh    chan GlobalLoggingConfig
 	ComponentLoggingConfigCh chan ComponentLoggingConfig
 	sysdPubSocket            *nanomsg.PubSocket
+	sysdIpTableMgr           *ipTable.SysdIpTableHandler
 	notificationCh           chan []byte
+	IptableAddCh             chan *sysd.IpTableAcl
+	IptableDelCh             chan *sysd.IpTableAcl
+	dbUserCh                 chan int
 }
 
 func NewSYSDServer(logger *logging.Writer) *SYSDServer {
 	sysdServer := &SYSDServer{}
+	sysdServer.sysdIpTableMgr = ipTable.SysdNewSysdIpTableHandler(logger)
 	sysdServer.logger = logger
 	sysdServer.GlobalLoggingConfigCh = make(chan GlobalLoggingConfig)
 	sysdServer.ComponentLoggingConfigCh = make(chan ComponentLoggingConfig)
 	sysdServer.notificationCh = make(chan []byte)
+	sysdServer.IptableAddCh = make(chan *sysd.IpTableAcl)
+	sysdServer.IptableDelCh = make(chan *sysd.IpTableAcl)
+	sysdServer.dbUserCh = make(chan int, 1)
 	return sysdServer
 }
 
@@ -106,17 +120,19 @@ func (server *SYSDServer) ReadComponentLoggingConfigFromDB(dbHdl *sql.DB) error 
 
 func (server *SYSDServer) ReadConfigFromDB(dbHdl *sql.DB) error {
 	var err error
-	defer dbHdl.Close()
 	// BfdGlobalConfig
 	err = server.ReadGlobalLoggingConfigFromDB(dbHdl)
 	if err != nil {
+		server.dbUserCh <- 1
 		return err
 	}
 	// BfdIntfConfig
 	err = server.ReadComponentLoggingConfigFromDB(dbHdl)
 	if err != nil {
+		server.dbUserCh <- 1
 		return err
 	}
+	server.dbUserCh <- 1
 	return nil
 }
 
@@ -173,22 +189,36 @@ func (server *SYSDServer) ProcessComponentLoggingConfig(cLogConf ComponentLoggin
 func (server *SYSDServer) StartServer(paramFile string, dbHdl *sql.DB) {
 	// Start signal handler first
 	go server.SigHandler()
-	// Initialize BFD server from params file
+	// Initialize sysd server from params file
 	server.InitServer(paramFile)
 	// Start notification publish thread
 	go server.PublishSysdNotifications()
-	// Read BFD configurations already present in DB
+	// Read configurations already present in DB
 	go server.ReadConfigFromDB(dbHdl)
-
+	// Read IpTableAclConfig during restart case
+	go server.ReadIpAclConfigFromDB(dbHdl)
+	users := 0
 	// Now, wait on below channels to process
 	for {
 		select {
 		case gLogConf := <-server.GlobalLoggingConfigCh:
-			server.logger.Info(fmt.Sprintln("Received call for performing Global logging Configuration", gLogConf))
+			server.logger.Info(fmt.Sprintln("Received call for performing Global logging Configuration",
+				gLogConf))
 			server.ProcessGlobalLoggingConfig(gLogConf)
 		case compLogConf := <-server.ComponentLoggingConfigCh:
-			server.logger.Info(fmt.Sprintln("Received call for performing Component logging Configuration", compLogConf))
+			server.logger.Info(fmt.Sprintln("Received call for performing Component logging Configuration",
+				compLogConf))
 			server.ProcessComponentLoggingConfig(compLogConf)
+		case addConfig := <-server.IptableAddCh:
+			server.sysdIpTableMgr.AddIpRule(addConfig, false /*non-restart*/)
+		case delConfig := <-server.IptableDelCh:
+			server.sysdIpTableMgr.DelIpRule(delConfig)
+		case totalUsers := <-server.dbUserCh:
+			users = totalUsers + users
+			if users == SYSD_TOTAL_DB_USERS {
+				server.logger.Info("Closing DB as all the db users are done")
+				dbHdl.Close()
+			}
 		}
 	}
 }

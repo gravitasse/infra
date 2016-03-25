@@ -20,7 +20,7 @@ func NewSYSDHandler(logger *logging.Writer, server *server.SYSDServer) *SYSDHand
 	return h
 }
 
-func (h *SYSDHandler) SendGlobalLoggingConfig(gLoggingConfig *sysd.SystemLoggingConfig) bool {
+func (h *SYSDHandler) SendGlobalLoggingConfig(gLoggingConfig *sysd.SystemLogging) bool {
 	var Logging bool
 	if gLoggingConfig.SystemLogging == "on" {
 		Logging = true
@@ -34,7 +34,7 @@ func (h *SYSDHandler) SendGlobalLoggingConfig(gLoggingConfig *sysd.SystemLogging
 	return true
 }
 
-func (h *SYSDHandler) SendComponentLoggingConfig(cLoggingConfig *sysd.ComponentLoggingConfig) bool {
+func (h *SYSDHandler) SendComponentLoggingConfig(cLoggingConfig *sysd.ComponentLogging) bool {
 	cConf := server.ComponentLoggingConfig{
 		Component: cLoggingConfig.Module,
 		Level:     logging.ConvertLevelStrToVal(cLoggingConfig.Level),
@@ -43,7 +43,7 @@ func (h *SYSDHandler) SendComponentLoggingConfig(cLoggingConfig *sysd.ComponentL
 	return true
 }
 
-func (h *SYSDHandler) UpdateSystemLoggingConfig(origConf *sysd.SystemLoggingConfig, newConf *sysd.SystemLoggingConfig, attrset []bool) (bool, error) {
+func (h *SYSDHandler) UpdateSystemLogging(origConf *sysd.SystemLogging, newConf *sysd.SystemLogging, attrset []bool) (bool, error) {
 	h.logger.Info(fmt.Sprintln("Original global config attrs:", origConf))
 	if newConf == nil {
 		err := errors.New("Invalid global Configuration")
@@ -53,7 +53,7 @@ func (h *SYSDHandler) UpdateSystemLoggingConfig(origConf *sysd.SystemLoggingConf
 	return h.SendGlobalLoggingConfig(newConf), nil
 }
 
-func (h *SYSDHandler) UpdateComponentLoggingConfig(origConf *sysd.ComponentLoggingConfig, newConf *sysd.ComponentLoggingConfig, attrset []bool) (bool, error) {
+func (h *SYSDHandler) UpdateComponentLogging(origConf *sysd.ComponentLogging, newConf *sysd.ComponentLogging, attrset []bool) (bool, error) {
 	h.logger.Info(fmt.Sprintln("Original component config attrs:", origConf))
 	if newConf == nil {
 		err := errors.New("Invalid component Configuration")
@@ -63,22 +63,41 @@ func (h *SYSDHandler) UpdateComponentLoggingConfig(origConf *sysd.ComponentLoggi
 	return h.SendComponentLoggingConfig(newConf), nil
 }
 
-func (h *SYSDHandler) CreateSystemLoggingConfig(gLoggingConf *sysd.SystemLoggingConfig) (bool, error) {
+func (h *SYSDHandler) CreateSystemLogging(gLoggingConf *sysd.SystemLogging) (bool, error) {
 	h.logger.Info(fmt.Sprintln("Create global config attrs:", gLoggingConf))
 	return h.SendGlobalLoggingConfig(gLoggingConf), nil
 }
 
-func (h *SYSDHandler) CreateComponentLoggingConfig(cLoggingConf *sysd.ComponentLoggingConfig) (bool, error) {
+func (h *SYSDHandler) CreateComponentLogging(cLoggingConf *sysd.ComponentLogging) (bool, error) {
 	h.logger.Info(fmt.Sprintln("Create component config attrs:", cLoggingConf))
 	return h.SendComponentLoggingConfig(cLoggingConf), nil
 }
 
-func (h *SYSDHandler) DeleteSystemLoggingConfig(gLoggingConf *sysd.SystemLoggingConfig) (bool, error) {
+func (h *SYSDHandler) DeleteSystemLogging(gLoggingConf *sysd.SystemLogging) (bool, error) {
 	h.logger.Info(fmt.Sprintln("Delete global config attrs:", gLoggingConf))
 	return true, nil
 }
 
-func (h *SYSDHandler) DeleteComponentLoggingConfig(cLoggingConf *sysd.ComponentLoggingConfig) (bool, error) {
+func (h *SYSDHandler) DeleteComponentLogging(cLoggingConf *sysd.ComponentLogging) (bool, error) {
 	h.logger.Info(fmt.Sprintln("Delete component config attrs:", cLoggingConf))
+	return true, nil
+}
+
+func (h *SYSDHandler) CreateIpTableAcl(ipaclConfig *sysd.IpTableAcl) (bool, error) {
+	h.logger.Info("Create Ip Table rule " + ipaclConfig.Name)
+	h.server.IptableAddCh <- ipaclConfig
+	return true, nil
+	//return (h.server.AddIpTableRule(ipaclConfig, false /* non - restart*/))
+}
+
+func (h *SYSDHandler) UpdateIpTableAcl(origConf *sysd.IpTableAcl,
+	newConf *sysd.IpTableAcl, attrset []bool) (bool, error) {
+	return true, nil
+}
+
+func (h *SYSDHandler) DeleteIpTableAcl(ipaclConfig *sysd.IpTableAcl) (bool, error) {
+	h.logger.Info("Delete Ip Table rule " + ipaclConfig.Name)
+	//return (h.server.DelIpTableRule(ipaclConfig))
+	h.server.IptableDelCh <- ipaclConfig
 	return true, nil
 }
