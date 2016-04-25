@@ -7,9 +7,15 @@ const (
 )
 
 const (
-	G_LOG uint8 = 1
-	C_LOG uint8 = 2
+	G_LOG     uint8 = 1 // Global logging configuration
+	C_LOG     uint8 = 2 // Component level logging configuration
+	KA_DAEMON uint8 = 3 // Daemon keepalive notification
 )
+
+type Notification struct {
+	Type    uint8
+	Payload []byte
+}
 
 //Logging levels
 type SRDebugLevel uint8
@@ -35,7 +41,18 @@ type ComponentLogging struct {
 	Level SRDebugLevel
 }
 
-type Notification struct {
-	Type    uint8
-	Payload []byte
+type SRDaemonStatus uint8
+
+const (
+	SYSD_TOTAL_KA_DAEMONS = 32
+)
+
+const (
+	KA_UP   SRDaemonStatus = 0
+	KA_DOWN SRDaemonStatus = 1
+)
+
+type DaemonStatus struct {
+	Name   string
+	Status SRDaemonStatus
 }

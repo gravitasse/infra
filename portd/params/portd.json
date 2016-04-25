@@ -1,7 +1,0 @@
-[
-	{"Port"  : 1,
-	 "Ifname": "eth0"},
-
-	{"Port"  : 2,
-	 "Ifname": "fpPort2"}
-]

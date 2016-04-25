@@ -29,6 +29,7 @@ type ComponentLoggingConfig struct {
 
 type SYSDServer struct {
 	logger                   *logging.Writer
+	paramsDir                string
 	GlobalLoggingConfigCh    chan GlobalLoggingConfig
 	ComponentLoggingConfigCh chan ComponentLoggingConfig
 	sysdPubSocket            *nanomsg.PubSocket
@@ -37,6 +38,8 @@ type SYSDServer struct {
 	IptableAddCh             chan *sysd.IpTableAcl
 	IptableDelCh             chan *sysd.IpTableAcl
 	dbUserCh                 chan int
+	KaRecvCh                 chan string
+	KaRecvMap                map[string]*WDInfo
 }
 
 func NewSYSDServer(logger *logging.Writer) *SYSDServer {
@@ -72,8 +75,9 @@ func (server *SYSDServer) SigHandler() {
 	}
 }
 
-func (server *SYSDServer) InitServer(paramFile string) {
-	server.logger.Info(fmt.Sprintln("Starting Sysd Server"))
+func (server *SYSDServer) InitServer(paramsDir string) {
+	server.logger.Info(fmt.Sprintln("Initializing Sysd Server"))
+	server.paramsDir = paramsDir
 }
 
 func (server *SYSDServer) InitPublisher(pub_str string) (pub *nanomsg.PubSocket) {
@@ -189,14 +193,14 @@ func (server *SYSDServer) ProcessComponentLoggingConfig(cLogConf ComponentLoggin
 func (server *SYSDServer) StartServer(paramFile string, dbHdl *sql.DB) {
 	// Start signal handler first
 	go server.SigHandler()
-	// Initialize sysd server from params file
-	server.InitServer(paramFile)
 	// Start notification publish thread
 	go server.PublishSysdNotifications()
 	// Read configurations already present in DB
 	go server.ReadConfigFromDB(dbHdl)
 	// Read IpTableAclConfig during restart case
 	go server.ReadIpAclConfigFromDB(dbHdl)
+	// Start watchdog routine
+	go server.StartWDRoutine()
 	users := 0
 	// Now, wait on below channels to process
 	for {

@@ -101,3 +101,8 @@ func (h *SYSDHandler) DeleteIpTableAcl(ipaclConfig *sysd.IpTableAcl) (bool, erro
 	h.server.IptableDelCh <- ipaclConfig
 	return true, nil
 }
+
+func (h *SYSDHandler) PeriodicKeepAlive(name string) error {
+	h.server.KaRecvCh <- name
+	return nil
+}

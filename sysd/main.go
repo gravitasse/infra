@@ -11,9 +11,10 @@ import (
 )
 
 /*
-#cgo LDFLAGS: -L../../netfilter/libiptables/lib 
+#cgo LDFLAGS: -L../../netfilter/libiptables/lib
 */
 import "C"
+
 func main() {
 	fmt.Println("Starting system daemon")
 	paramsDir := flag.String("params", "./params", "Params directory")
@@ -41,9 +42,11 @@ func main() {
 
 	logger.Info(fmt.Sprintln("Starting Sysd Server..."))
 	sysdServer := server.NewSYSDServer(logger)
+	// Initialize sysd server
+	sysdServer.InitServer(fileName)
 	go sysdServer.StartServer(clientsFileName, dbHdl)
 
-	logger.Info(fmt.Sprintln("Starting Config listener..."))
+	logger.Info(fmt.Sprintln("Starting Sysd Config listener..."))
 	confIface := rpc.NewSYSDHandler(logger, sysdServer)
 	rpc.StartServer(logger, confIface, clientsFileName)
 }
