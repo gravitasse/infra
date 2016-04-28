@@ -21,15 +21,16 @@ type Notification struct {
 type SRDebugLevel uint8
 
 const (
-	CRIT   SRDebugLevel = 0
-	ERR    SRDebugLevel = 1
-	WARN   SRDebugLevel = 2
-	ALERT  SRDebugLevel = 3
-	EMERG  SRDebugLevel = 4
-	NOTICE SRDebugLevel = 5
-	INFO   SRDebugLevel = 6
-	DEBUG  SRDebugLevel = 7
-	TRACE  SRDebugLevel = 8
+	OFF    SRDebugLevel = 0
+	CRIT   SRDebugLevel = 1
+	ERR    SRDebugLevel = 2
+	WARN   SRDebugLevel = 3
+	ALERT  SRDebugLevel = 4
+	EMERG  SRDebugLevel = 5
+	NOTICE SRDebugLevel = 6
+	INFO   SRDebugLevel = 7
+	DEBUG  SRDebugLevel = 8
+	TRACE  SRDebugLevel = 9
 )
 
 type GlobalLogging struct {
