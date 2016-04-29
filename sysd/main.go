@@ -26,8 +26,7 @@ func main() {
 
 	logger, err := logging.NewLogger(fileName, "sysd", "SYSTEM")
 	if err != nil {
-		fmt.Println("Failed to start the logger. Exiting!!")
-		return
+		fmt.Println("Failed to start the logger. Nothing will be logged...")
 	}
 	logger.Info("Started the logger successfully.")
 
