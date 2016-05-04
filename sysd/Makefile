@@ -14,7 +14,7 @@ ipc:
 	$(IPC_GEN_CMD) -r --gen go -out $(GENERATED_IPC) $(IPC_SRCS)
 
 exe: $(SRCS)
-	go build -o $(DESTDIR)/$(COMP_NAME) -ldflags="$(GOLDFLAGS):$(SR_CODE_BASE)/snaproute/src/netfilter/libiptables/lib" $(SRCS)
+	go build -o $(DESTDIR)/$(COMP_NAME) -ldflags="$(GOLDFLAGS):$(SR_CODE_BASE)/external/src/github.com/netfilter/libiptables/lib" $(SRCS)
 
 guard:
 ifndef SR_CODE_BASE
@@ -22,7 +22,7 @@ ifndef SR_CODE_BASE
 endif
 
 install:
-	install $(SR_CODE_BASE)/snaproute/src/netfilter/libiptables/lib/libip4tc.so.0.1.0 $(DESTDIR)/sharedlib
+	install $(SR_CODE_BASE)/external/src/github.com/netfilter/libiptables/lib/libip4tc.so.0.1.0 $(DESTDIR)/sharedlib
 
 clean:guard
 	$(RM) $(DESTDIR)/$(COMP_NAME) 

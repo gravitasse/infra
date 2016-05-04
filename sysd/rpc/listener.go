@@ -22,7 +22,7 @@ func NewSYSDHandler(logger *logging.Writer, server *server.SYSDServer) *SYSDHand
 
 func (h *SYSDHandler) SendGlobalLoggingConfig(gLoggingConfig *sysd.SystemLogging) bool {
 	var Logging bool
-	if gLoggingConfig.SystemLogging == "on" {
+	if gLoggingConfig.Logging == "on" {
 		Logging = true
 	} else {
 		Logging = false
@@ -75,12 +75,14 @@ func (h *SYSDHandler) CreateComponentLogging(cLoggingConf *sysd.ComponentLogging
 
 func (h *SYSDHandler) DeleteSystemLogging(gLoggingConf *sysd.SystemLogging) (bool, error) {
 	h.logger.Info(fmt.Sprintln("Delete global config attrs:", gLoggingConf))
-	return true, nil
+	err := errors.New("Not supported")
+	return false, err
 }
 
 func (h *SYSDHandler) DeleteComponentLogging(cLoggingConf *sysd.ComponentLogging) (bool, error) {
 	h.logger.Info(fmt.Sprintln("Delete component config attrs:", cLoggingConf))
-	return true, nil
+	err := errors.New("Not supported")
+	return false, err
 }
 
 func (h *SYSDHandler) CreateIpTableAcl(ipaclConfig *sysd.IpTableAcl) (bool, error) {
@@ -92,7 +94,8 @@ func (h *SYSDHandler) CreateIpTableAcl(ipaclConfig *sysd.IpTableAcl) (bool, erro
 
 func (h *SYSDHandler) UpdateIpTableAcl(origConf *sysd.IpTableAcl,
 	newConf *sysd.IpTableAcl, attrset []bool) (bool, error) {
-	return true, nil
+	err := errors.New("Not supported")
+	return false, err
 }
 
 func (h *SYSDHandler) DeleteIpTableAcl(ipaclConfig *sysd.IpTableAcl) (bool, error) {
@@ -100,6 +103,45 @@ func (h *SYSDHandler) DeleteIpTableAcl(ipaclConfig *sysd.IpTableAcl) (bool, erro
 	//return (h.server.DelIpTableRule(ipaclConfig))
 	h.server.IptableDelCh <- ipaclConfig
 	return true, nil
+}
+
+func (h *SYSDHandler) ExecuteActionDaemon(daemonConfig *sysd.Daemon) (bool, error) {
+	h.logger.Info(fmt.Sprintln("Daemon action attrs: ", daemonConfig))
+	dConf := server.DaemonConfig{
+		Name:   daemonConfig.Name,
+		Enable: daemonConfig.Enable,
+	}
+	h.server.DaemonConfigCh <- dConf
+	return true, nil
+}
+
+func (h *SYSDHandler) GetDaemonState(name string) (*sysd.DaemonState, error) {
+	h.logger.Info(fmt.Sprintln("Get Daemon state ", name))
+	daemonStateResponse := sysd.NewDaemonState()
+	dState := h.server.GetDaemonState(name)
+	daemonState := h.server.ConvertDaemonStateToThrift(*dState)
+	daemonStateResponse = daemonState
+	return daemonStateResponse, nil
+}
+
+func (h *SYSDHandler) GetBulkDaemonState(fromIdx sysd.Int, count sysd.Int) (*sysd.DaemonStateGetInfo, error) {
+	h.logger.Info(fmt.Sprintln("Get Daemon states "))
+	nextIdx, currCount, daemonStates := h.server.GetBulkDaemonStates(int(fromIdx), int(count))
+	if daemonStates == nil {
+		err := errors.New("System server is busy")
+		return nil, err
+	}
+	daemonStatesResponse := make([]*sysd.DaemonState, len(daemonStates))
+	for idx, item := range daemonStates {
+		daemonStatesResponse[idx] = h.server.ConvertDaemonStateToThrift(item)
+	}
+	daemonStateGetInfo := sysd.NewDaemonStateGetInfo()
+	daemonStateGetInfo.Count = sysd.Int(currCount)
+	daemonStateGetInfo.StartIdx = sysd.Int(fromIdx)
+	daemonStateGetInfo.EndIdx = sysd.Int(nextIdx)
+	daemonStateGetInfo.More = (nextIdx != 0)
+	daemonStateGetInfo.DaemonStateList = daemonStatesResponse
+	return daemonStateGetInfo, nil
 }
 
 func (h *SYSDHandler) PeriodicKeepAlive(name string) error {

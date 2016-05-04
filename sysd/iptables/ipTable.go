@@ -10,8 +10,8 @@ import (
 )
 
 /*
-#cgo CFLAGS: -I../../../netfilter/libiptables/include -I../../../netfilter/iptables/include
-#cgo LDFLAGS: -L../../../netfilter/libiptables/lib -lip4tc
+#cgo CFLAGS: -I../../../../../external/src/github.com/netfilter/libiptables/include -I../../../../../external/src/github.com/netfilter/iptables/include
+#cgo LDFLAGS: -L../../../../../external/src/github.com/netfilter/libiptables/lib -lip4tc
 #include "ipTable.h"
 */
 import "C"

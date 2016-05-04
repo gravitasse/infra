@@ -1,7 +1,6 @@
 package server
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	nanomsg "github.com/op/go-nanomsg"
@@ -11,11 +10,8 @@ import (
 	"os/signal"
 	"syscall"
 	"sysd"
+	"utils/dbutils"
 	"utils/logging"
-)
-
-const (
-	SYSD_TOTAL_DB_USERS = 2
 )
 
 type GlobalLoggingConfig struct {
@@ -27,8 +23,27 @@ type ComponentLoggingConfig struct {
 	Level     sysdCommonDefs.SRDebugLevel
 }
 
+type DaemonConfig struct {
+	Name   string
+	Enable bool
+}
+
+type DaemonState struct {
+	Name          string
+	Enable        bool
+	State         sysdCommonDefs.SRDaemonStatus
+	Reason        string
+	Version       string
+	RecvedKACount int32
+	NumRestarts   int32
+	RestartTime   string
+	RestartReason string
+}
+
 type SYSDServer struct {
 	logger                   *logging.Writer
+	dbHdl                    *dbutils.DBUtil
+	ServerStartedCh          chan bool
 	paramsDir                string
 	GlobalLoggingConfigCh    chan GlobalLoggingConfig
 	ComponentLoggingConfigCh chan ComponentLoggingConfig
@@ -37,25 +52,29 @@ type SYSDServer struct {
 	notificationCh           chan []byte
 	IptableAddCh             chan *sysd.IpTableAcl
 	IptableDelCh             chan *sysd.IpTableAcl
-	dbUserCh                 chan int
 	KaRecvCh                 chan string
-	KaRecvMap                map[string]*WDInfo
+	DaemonMap                map[string]*DaemonInfo
+	DaemonConfigCh           chan DaemonConfig
+	UpdateInfoInDbCh         chan string
+	DaemonRestartCh          chan string
 }
 
-func NewSYSDServer(logger *logging.Writer) *SYSDServer {
+func NewSYSDServer(logger *logging.Writer, dbHdl *dbutils.DBUtil, paramsDir string) *SYSDServer {
 	sysdServer := &SYSDServer{}
 	sysdServer.sysdIpTableMgr = ipTable.SysdNewSysdIpTableHandler(logger)
 	sysdServer.logger = logger
+	sysdServer.dbHdl = dbHdl
+	sysdServer.paramsDir = paramsDir
+	sysdServer.ServerStartedCh = make(chan bool)
 	sysdServer.GlobalLoggingConfigCh = make(chan GlobalLoggingConfig)
 	sysdServer.ComponentLoggingConfigCh = make(chan ComponentLoggingConfig)
 	sysdServer.notificationCh = make(chan []byte)
 	sysdServer.IptableAddCh = make(chan *sysd.IpTableAcl)
 	sysdServer.IptableDelCh = make(chan *sysd.IpTableAcl)
-	sysdServer.dbUserCh = make(chan int, 1)
 	return sysdServer
 }
 
-func (server *SYSDServer) SigHandler() {
+func (server *SYSDServer) SigHandler(dbHdl *dbutils.DBUtil) {
 	server.logger.Info(fmt.Sprintln("Starting SigHandler"))
 	sigChan := make(chan os.Signal, 1)
 	signalList := []os.Signal{syscall.SIGHUP}
@@ -67,6 +86,7 @@ func (server *SYSDServer) SigHandler() {
 			switch signal {
 			case syscall.SIGHUP:
 				server.logger.Info("Received SIGHUP signal. Exiting")
+				dbHdl.Disconnect()
 				os.Exit(0)
 			default:
 				server.logger.Info(fmt.Sprintln("Unhandled signal : ", signal))
@@ -75,9 +95,8 @@ func (server *SYSDServer) SigHandler() {
 	}
 }
 
-func (server *SYSDServer) InitServer(paramsDir string) {
+func (server *SYSDServer) InitServer() {
 	server.logger.Info(fmt.Sprintln("Initializing Sysd Server"))
-	server.paramsDir = paramsDir
 }
 
 func (server *SYSDServer) InitPublisher(pub_str string) (pub *nanomsg.PubSocket) {
@@ -112,32 +131,6 @@ func (server *SYSDServer) PublishSysdNotifications() {
 			}
 		}
 	}
-}
-
-func (server *SYSDServer) ReadGlobalLoggingConfigFromDB(dbHdl *sql.DB) error {
-	return nil
-}
-
-func (server *SYSDServer) ReadComponentLoggingConfigFromDB(dbHdl *sql.DB) error {
-	return nil
-}
-
-func (server *SYSDServer) ReadConfigFromDB(dbHdl *sql.DB) error {
-	var err error
-	// BfdGlobalConfig
-	err = server.ReadGlobalLoggingConfigFromDB(dbHdl)
-	if err != nil {
-		server.dbUserCh <- 1
-		return err
-	}
-	// BfdIntfConfig
-	err = server.ReadComponentLoggingConfigFromDB(dbHdl)
-	if err != nil {
-		server.dbUserCh <- 1
-		return err
-	}
-	server.dbUserCh <- 1
-	return nil
 }
 
 func (server *SYSDServer) ProcessGlobalLoggingConfig(gLogConf GlobalLoggingConfig) error {
@@ -190,18 +183,13 @@ func (server *SYSDServer) ProcessComponentLoggingConfig(cLogConf ComponentLoggin
 	return nil
 }
 
-func (server *SYSDServer) StartServer(paramFile string, dbHdl *sql.DB) {
-	// Start signal handler first
-	go server.SigHandler()
+func (server *SYSDServer) StartServer() {
 	// Start notification publish thread
 	go server.PublishSysdNotifications()
-	// Read configurations already present in DB
-	go server.ReadConfigFromDB(dbHdl)
-	// Read IpTableAclConfig during restart case
-	go server.ReadIpAclConfigFromDB(dbHdl)
 	// Start watchdog routine
 	go server.StartWDRoutine()
-	users := 0
+
+	server.ServerStartedCh <- true
 	// Now, wait on below channels to process
 	for {
 		select {
@@ -217,12 +205,6 @@ func (server *SYSDServer) StartServer(paramFile string, dbHdl *sql.DB) {
 			server.sysdIpTableMgr.AddIpRule(addConfig, false /*non-restart*/)
 		case delConfig := <-server.IptableDelCh:
 			server.sysdIpTableMgr.DelIpRule(delConfig)
-		case totalUsers := <-server.dbUserCh:
-			users = totalUsers + users
-			if users == SYSD_TOTAL_DB_USERS {
-				server.logger.Info("Closing DB as all the db users are done")
-				dbHdl.Close()
-			}
 		}
 	}
 }

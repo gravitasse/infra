@@ -42,16 +42,35 @@ type ComponentLogging struct {
 	Level SRDebugLevel
 }
 
-type SRDaemonStatus uint8
-
 const (
 	SYSD_TOTAL_KA_DAEMONS = 32
 )
 
+type SRDaemonStatus uint8
+
 const (
-	KA_UP   SRDaemonStatus = 0
-	KA_DOWN SRDaemonStatus = 1
+	UP         SRDaemonStatus = 0
+	STARTING   SRDaemonStatus = 1
+	RESTARTING SRDaemonStatus = 2
+	STOPPED    SRDaemonStatus = 3
 )
+
+func ConvertDaemonStateCodeToString(status SRDaemonStatus) string {
+	var statusStr string
+	switch status {
+	case UP:
+		statusStr = "up"
+	case STARTING:
+		statusStr = "starting"
+	case RESTARTING:
+		statusStr = "restarting"
+	case STOPPED:
+		statusStr = "stopped"
+	default:
+		statusStr = "unknown"
+	}
+	return statusStr
+}
 
 type DaemonStatus struct {
 	Name   string

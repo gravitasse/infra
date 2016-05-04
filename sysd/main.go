@@ -1,17 +1,16 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 	"infra/sysd/rpc"
 	"infra/sysd/server"
+	"utils/dbutils"
 	"utils/logging"
 )
 
 /*
-#cgo LDFLAGS: -L../../netfilter/libiptables/lib
+#cgo LDFLAGS: -L../../../../external/src/github.com/netfilter/libiptables/lib
 */
 import "C"
 
@@ -24,27 +23,38 @@ func main() {
 		fileName = fileName + "/"
 	}
 
-	logger, err := logging.NewLogger(fileName, "sysd", "SYSTEM")
+	logger, err := logging.NewLogger("sysd", "SYSTEM", false)
 	if err != nil {
 		fmt.Println("Failed to start the logger. Nothing will be logged...")
 	}
 	logger.Info("Started the logger successfully.")
 
-	dbName := fileName + "UsrConfDb.db"
-	fmt.Println("Opening Config DB: ", dbName)
-	dbHdl, err := sql.Open("sqlite3", dbName)
-	if err != nil {
-		fmt.Println("Failed to open connection to DB. ", err, " Exiting!!")
+	/*
+		dbHdl, err := redis.Dial("tcp", ":6379")
+		if err != nil {
+			logger.Err("Failed to dial out to Redis server")
+			return
+		}
+	*/
+	dbHdl := dbutils.NewDBUtil(logger)
+	if err := dbHdl.Connect(); err != nil {
 		return
 	}
+
 	clientsFileName := fileName + "clients.json"
 
 	logger.Info(fmt.Sprintln("Starting Sysd Server..."))
-	sysdServer := server.NewSYSDServer(logger)
+	sysdServer := server.NewSYSDServer(logger, dbHdl, fileName)
 	// Initialize sysd server
-	sysdServer.InitServer(fileName)
-	go sysdServer.StartServer(clientsFileName, dbHdl)
+	sysdServer.InitServer()
+	// Start signal handler first
+	go sysdServer.SigHandler(dbHdl)
+	// Start sysd server
+	go sysdServer.StartServer()
+	<-sysdServer.ServerStartedCh
 
+	// Read IpTableAclConfig during restart case
+	sysdServer.ReadIpAclConfigFromDB(dbHdl)
 	logger.Info(fmt.Sprintln("Starting Sysd Config listener..."))
 	confIface := rpc.NewSYSDHandler(logger, sysdServer)
 	rpc.StartServer(logger, confIface, clientsFileName)
