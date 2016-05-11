@@ -33,7 +33,6 @@ type DaemonState struct {
 	Enable        bool
 	State         sysdCommonDefs.SRDaemonStatus
 	Reason        string
-	Version       string
 	RecvedKACount int32
 	NumRestarts   int32
 	RestartTime   string
