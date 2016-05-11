@@ -31,7 +31,6 @@ type DaemonInfo struct {
 	Enable        bool
 	State         sysdCommonDefs.SRDaemonStatus
 	Reason        string
-	Version       string
 	RecvedKACount int32
 	NumRestarts   int32
 	RestartTime   string
@@ -42,7 +41,6 @@ func (daemonInfo *DaemonInfo) Initialize() error {
 	daemonInfo.Enable = true
 	daemonInfo.State = sysdCommonDefs.STARTING
 	daemonInfo.Reason = REASON_COMING_UP
-	daemonInfo.Version = ""
 	daemonInfo.RecvedKACount = 0
 	daemonInfo.NumRestarts = 0
 	daemonInfo.RestartTime = ""
@@ -207,7 +205,6 @@ func (server *SYSDServer) ConvertDaemonStateToThrift(ent DaemonState) *sysd.Daem
 	dState.Enable = ent.Enable
 	dState.State = string(sysdCommonDefs.ConvertDaemonStateCodeToString(ent.State))
 	dState.Reason = string(ent.Reason)
-	dState.Version = string(ent.Version)
 	kaStr := fmt.Sprintf("Received %d keepalives", ent.RecvedKACount)
 	dState.KeepAlive = string(kaStr)
 	dState.RestartCount = int32(ent.NumRestarts)
@@ -223,7 +220,6 @@ func (server *SYSDServer) ConvertDaemonStateToObj(ent DaemonState) models.Daemon
 		Enable:        ent.Enable,
 		State:         sysdCommonDefs.ConvertDaemonStateCodeToString(ent.State),
 		Reason:        ent.Reason,
-		Version:       ent.Version,
 		KeepAlive:     kaStr,
 		RestartCount:  ent.NumRestarts,
 		RestartTime:   ent.RestartTime,
@@ -240,7 +236,6 @@ func (server *SYSDServer) GetDaemonState(name string) *DaemonState {
 		daemonState.Enable = daemonInfo.Enable
 		daemonState.State = daemonInfo.State
 		daemonState.Reason = daemonInfo.Reason
-		daemonState.Version = daemonInfo.Version
 		daemonState.RecvedKACount = daemonInfo.RecvedKACount
 		daemonState.NumRestarts = daemonInfo.NumRestarts
 		daemonState.RestartTime = daemonInfo.RestartTime
@@ -260,7 +255,6 @@ func (server *SYSDServer) GetBulkDaemonStates(idx int, cnt int) (int, int, []Dae
 		result[i].Enable = daemonInfo.Enable
 		result[i].State = daemonInfo.State
 		result[i].Reason = daemonInfo.Reason
-		result[i].Version = daemonInfo.Version
 		result[i].RecvedKACount = daemonInfo.RecvedKACount
 		result[i].NumRestarts = daemonInfo.NumRestarts
 		result[i].RestartTime = daemonInfo.RestartTime
