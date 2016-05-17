@@ -1,3 +1,26 @@
+//
+//Copyright [2016] [SnapRoute Inc]
+//
+//Licensed under the Apache License, Version 2.0 (the "License");
+//you may not use this file except in compliance with the License.
+//You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+//	 Unless required by applicable law or agreed to in writing, software
+//	 distributed under the License is distributed on an "AS IS" BASIS,
+//	 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//	 See the License for the specific language governing permissions and
+//	 limitations under the License.
+//
+// _______  __       __________   ___      _______.____    __    ____  __  .___________.  ______  __    __  
+// |   ____||  |     |   ____\  \ /  /     /       |\   \  /  \  /   / |  | |           | /      ||  |  |  | 
+// |  |__   |  |     |  |__   \  V  /     |   (----` \   \/    \/   /  |  | `---|  |----`|  ,----'|  |__|  | 
+// |   __|  |  |     |   __|   >   <       \   \      \            /   |  |     |  |     |  |     |   __   | 
+// |  |     |  `----.|  |____ /  .  \  .----)   |      \    /\    /    |  |     |  |     |  `----.|  |  |  | 
+// |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__| 
+//                                                                                                           
+
 package server
 
 import (
@@ -31,16 +54,19 @@ type DaemonInfo struct {
 	Enable        bool
 	State         sysdCommonDefs.SRDaemonStatus
 	Reason        string
+	StartTime     string
 	RecvedKACount int32
 	NumRestarts   int32
 	RestartTime   string
 	RestartReason string
+	WatchDog      bool
 }
 
 func (daemonInfo *DaemonInfo) Initialize() error {
 	daemonInfo.Enable = true
 	daemonInfo.State = sysdCommonDefs.STARTING
 	daemonInfo.Reason = REASON_COMING_UP
+	daemonInfo.StartTime = time.Now().String()
 	daemonInfo.RecvedKACount = 0
 	daemonInfo.NumRestarts = 0
 	daemonInfo.RestartTime = ""
@@ -75,8 +101,10 @@ func (server *SYSDServer) StartWDRoutine() error {
 			server.logger.Info(fmt.Sprintln("Received daemon config for: ", daemonConfig.Name, " Enable ", daemonConfig.Enable))
 			daemon := daemonConfig.Name
 			enable := daemonConfig.Enable
+			watchDog := daemonConfig.WatchDog
 			daemonInfo, exist := server.DaemonMap[daemon]
 			daemonUpdated := false
+			daemonInfo.WatchDog = watchDog
 			if enable {
 				if !exist {
 					daemonInfo = &DaemonInfo{}
@@ -183,7 +211,7 @@ func (server *SYSDServer) WDTimer() error {
 				if daemonInfo.RecvedKACount < KA_TIMEOUT_COUNT && daemonInfo.RecvedKACount > KA_TIMEOUT_COUNT_MIN {
 					server.logger.Info(fmt.Sprintln("Daemon ", daemon, " is slowing down. Monitoring it."))
 				}
-				if daemonInfo.RecvedKACount == KA_TIMEOUT_COUNT_MIN {
+				if daemonInfo.WatchDog && daemonInfo.RecvedKACount == KA_TIMEOUT_COUNT_MIN {
 					server.logger.Info(fmt.Sprintln("Daemon ", daemon, " is not responsive. Restarting it."))
 					server.DaemonRestartCh <- daemon
 					daemonInfo.State = sysdCommonDefs.RESTARTING
@@ -205,6 +233,7 @@ func (server *SYSDServer) ConvertDaemonStateToThrift(ent DaemonState) *sysd.Daem
 	dState.Enable = ent.Enable
 	dState.State = string(sysdCommonDefs.ConvertDaemonStateCodeToString(ent.State))
 	dState.Reason = string(ent.Reason)
+	dState.StartTime = string(ent.StartTime)
 	kaStr := fmt.Sprintf("Received %d keepalives", ent.RecvedKACount)
 	dState.KeepAlive = string(kaStr)
 	dState.RestartCount = int32(ent.NumRestarts)
@@ -220,6 +249,7 @@ func (server *SYSDServer) ConvertDaemonStateToObj(ent DaemonState) models.Daemon
 		Enable:        ent.Enable,
 		State:         sysdCommonDefs.ConvertDaemonStateCodeToString(ent.State),
 		Reason:        ent.Reason,
+		StartTime:     ent.StartTime,
 		KeepAlive:     kaStr,
 		RestartCount:  ent.NumRestarts,
 		RestartTime:   ent.RestartTime,
@@ -236,6 +266,7 @@ func (server *SYSDServer) GetDaemonState(name string) *DaemonState {
 		daemonState.Enable = daemonInfo.Enable
 		daemonState.State = daemonInfo.State
 		daemonState.Reason = daemonInfo.Reason
+		daemonState.StartTime = daemonInfo.StartTime
 		daemonState.RecvedKACount = daemonInfo.RecvedKACount
 		daemonState.NumRestarts = daemonInfo.NumRestarts
 		daemonState.RestartTime = daemonInfo.RestartTime
@@ -255,6 +286,7 @@ func (server *SYSDServer) GetBulkDaemonStates(idx int, cnt int) (int, int, []Dae
 		result[i].Enable = daemonInfo.Enable
 		result[i].State = daemonInfo.State
 		result[i].Reason = daemonInfo.Reason
+		result[i].StartTime = daemonInfo.StartTime
 		result[i].RecvedKACount = daemonInfo.RecvedKACount
 		result[i].NumRestarts = daemonInfo.NumRestarts
 		result[i].RestartTime = daemonInfo.RestartTime
