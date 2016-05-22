@@ -30,9 +30,10 @@ const (
 )
 
 const (
-	G_LOG     uint8 = 1 // Global logging configuration
-	C_LOG     uint8 = 2 // Component level logging configuration
-	KA_DAEMON uint8 = 3 // Daemon keepalive notification
+	G_LOG       uint8 = 1 // Global logging configuration
+	C_LOG       uint8 = 2 // Component level logging configuration
+	KA_DAEMON   uint8 = 3 // Daemon keepalive notification
+	SYSTEM_Info uint8 = 4 // System Information notification
 )
 
 type Notification struct {

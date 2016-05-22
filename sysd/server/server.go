@@ -13,13 +13,13 @@
 //	 See the License for the specific language governing permissions and
 //	 limitations under the License.
 //
-// _______  __       __________   ___      _______.____    __    ____  __  .___________.  ______  __    __  
-// |   ____||  |     |   ____\  \ /  /     /       |\   \  /  \  /   / |  | |           | /      ||  |  |  | 
-// |  |__   |  |     |  |__   \  V  /     |   (----` \   \/    \/   /  |  | `---|  |----`|  ,----'|  |__|  | 
-// |   __|  |  |     |   __|   >   <       \   \      \            /   |  |     |  |     |  |     |   __   | 
-// |  |     |  `----.|  |____ /  .  \  .----)   |      \    /\    /    |  |     |  |     |  `----.|  |  |  | 
-// |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__| 
-//                                                                                                           
+// _______  __       __________   ___      _______.____    __    ____  __  .___________.  ______  __    __
+// |   ____||  |     |   ____\  \ /  /     /       |\   \  /  \  /   / |  | |           | /      ||  |  |  |
+// |  |__   |  |     |  |__   \  V  /     |   (----` \   \/    \/   /  |  | `---|  |----`|  ,----'|  |__|  |
+// |   __|  |  |     |   __|   >   <       \   \      \            /   |  |     |  |     |  |     |   __   |
+// |  |     |  `----.|  |____ /  .  \  .----)   |      \    /\    /    |  |     |  |     |  `----.|  |  |  |
+// |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__|
+//
 
 package server
 
@@ -29,6 +29,7 @@ import (
 	nanomsg "github.com/op/go-nanomsg"
 	"infra/sysd/iptables"
 	"infra/sysd/sysdCommonDefs"
+	"models"
 	"os"
 	"os/signal"
 	"syscall"
@@ -76,11 +77,14 @@ type SYSDServer struct {
 	notificationCh           chan []byte
 	IptableAddCh             chan *sysd.IpTableAcl
 	IptableDelCh             chan *sysd.IpTableAcl
+	SystemParamConfig        chan models.SystemParam
 	KaRecvCh                 chan string
 	DaemonMap                map[string]*DaemonInfo
 	DaemonConfigCh           chan DaemonConfig
 	UpdateInfoInDbCh         chan string
 	DaemonRestartCh          chan string
+	SysInfo                  *models.SystemParam
+	SysUpdCh                 chan *SystemParamUpdate
 }
 
 func NewSYSDServer(logger *logging.Writer, dbHdl *dbutils.DBUtil, paramsDir string) *SYSDServer {
@@ -95,6 +99,8 @@ func NewSYSDServer(logger *logging.Writer, dbHdl *dbutils.DBUtil, paramsDir stri
 	sysdServer.notificationCh = make(chan []byte)
 	sysdServer.IptableAddCh = make(chan *sysd.IpTableAcl)
 	sysdServer.IptableDelCh = make(chan *sysd.IpTableAcl)
+	sysdServer.SystemParamConfig = make(chan models.SystemParam)
+	sysdServer.SysUpdCh = make(chan *SystemParamUpdate)
 	return sysdServer
 }
 
@@ -229,6 +235,10 @@ func (server *SYSDServer) StartServer() {
 			server.sysdIpTableMgr.AddIpRule(addConfig, false /*non-restart*/)
 		case delConfig := <-server.IptableDelCh:
 			server.sysdIpTableMgr.DelIpRule(delConfig)
+		case sysConfig := <-server.SystemParamConfig:
+			server.InitSystemInfo(sysConfig)
+		case updateInfo := <-server.SysUpdCh:
+			server.UpdateSystemInfo(updateInfo)
 		}
 	}
 }
