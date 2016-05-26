@@ -94,23 +94,25 @@ func (h *SYSDHandler) UpdateComponentLogging(origConf *sysd.ComponentLogging, ne
 
 func (h *SYSDHandler) CreateSystemLogging(gLoggingConf *sysd.SystemLogging) (bool, error) {
 	h.logger.Info(fmt.Sprintln("Create global config attrs:", gLoggingConf))
-	return h.SendGlobalLoggingConfig(gLoggingConf), nil
+	err := errors.New("SystemLogging create not supported")
+	return false, err
 }
 
 func (h *SYSDHandler) CreateComponentLogging(cLoggingConf *sysd.ComponentLogging) (bool, error) {
 	h.logger.Info(fmt.Sprintln("Create component config attrs:", cLoggingConf))
-	return h.SendComponentLoggingConfig(cLoggingConf), nil
+	err := errors.New("CompoenentLogging create not supported")
+	return false, err
 }
 
 func (h *SYSDHandler) DeleteSystemLogging(gLoggingConf *sysd.SystemLogging) (bool, error) {
 	h.logger.Info(fmt.Sprintln("Delete global config attrs:", gLoggingConf))
-	err := errors.New("Not supported")
+	err := errors.New("SystemLogging delete not supported")
 	return false, err
 }
 
 func (h *SYSDHandler) DeleteComponentLogging(cLoggingConf *sysd.ComponentLogging) (bool, error) {
 	h.logger.Info(fmt.Sprintln("Delete component config attrs:", cLoggingConf))
-	err := errors.New("Not supported")
+	err := errors.New("CompoenentLogging delete not supported")
 	return false, err
 }
 
@@ -122,7 +124,7 @@ func (h *SYSDHandler) CreateIpTableAcl(ipaclConfig *sysd.IpTableAcl) (bool, erro
 
 func (h *SYSDHandler) UpdateIpTableAcl(origConf *sysd.IpTableAcl, newConf *sysd.IpTableAcl,
 	attrset []bool, op string) (bool, error) {
-	err := errors.New("Not supported")
+	err := errors.New("IpTableAcl update not supported")
 	return false, err
 }
 

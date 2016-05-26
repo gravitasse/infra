@@ -154,7 +154,6 @@ func (server *SYSDServer) PublishSysdNotifications() {
 	for {
 		select {
 		case event := <-server.notificationCh:
-			server.logger.Info(fmt.Sprintln("Received call to notify ", event))
 			_, err := server.sysdPubSocket.Send(event, nanomsg.DontWait)
 			if err == syscall.EAGAIN {
 				server.logger.Err(fmt.Sprintln("Failed to publish event"))
