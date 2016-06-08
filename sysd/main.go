@@ -65,12 +65,14 @@ func main() {
 	sysdServer.InitServer()
 	// Start signal handler first
 	go sysdServer.SigHandler(dbHdl)
+
 	// Start sysd server
 	go sysdServer.StartServer()
 	<-sysdServer.ServerStartedCh
 
 	// Read IpTableAclConfig during restart case
 	sysdServer.ReadIpAclConfigFromDB(dbHdl)
+
 	logger.Info(fmt.Sprintln("Starting Sysd Config listener..."))
 	confIface := rpc.NewSYSDHandler(logger, sysdServer)
 	rpc.StartServer(logger, confIface, clientsFileName)

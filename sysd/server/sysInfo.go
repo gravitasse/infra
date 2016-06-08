@@ -49,7 +49,6 @@ func (svr *SYSDServer) ReadSystemInfoFromDB() error {
 		for idx := 0; idx < len(objList); idx++ {
 			dbObject := objList[idx].(models.SystemParam)
 			svr.SysInfo.SwitchMac = dbObject.SwitchMac
-			svr.SysInfo.RouterId = dbObject.RouterId
 			svr.SysInfo.MgmtIp = dbObject.MgmtIp
 			svr.SysInfo.Version = dbObject.Version
 			svr.SysInfo.Description = dbObject.Description
@@ -81,7 +80,6 @@ func (svr *SYSDServer) SendSystemUpdate() ([]byte, error) {
 func (svr *SYSDServer) copyAndSendSystemParam(cfg models.SystemParam) {
 	sysInfo := svr.SysInfo
 	sysInfo.SwitchMac = cfg.SwitchMac
-	sysInfo.RouterId = cfg.RouterId
 	sysInfo.MgmtIp = cfg.MgmtIp
 	sysInfo.Version = cfg.Version
 	sysInfo.Description = cfg.Description
@@ -110,7 +108,6 @@ func (svr *SYSDServer) GetSystemParam(name string) *models.SystemParamState {
 
 	sysParamsInfo.Vrf = svr.SysInfo.Vrf
 	sysParamsInfo.SwitchMac = svr.SysInfo.SwitchMac
-	sysParamsInfo.RouterId = svr.SysInfo.RouterId
 	sysParamsInfo.MgmtIp = svr.SysInfo.MgmtIp
 	sysParamsInfo.Version = svr.SysInfo.Version
 	sysParamsInfo.Description = svr.SysInfo.Description

@@ -72,7 +72,7 @@ func (h *SYSDHandler) SendComponentLoggingConfig(cLoggingConfig *sysd.ComponentL
 	return true
 }
 
-func (h *SYSDHandler) UpdateSystemLogging(origConf *sysd.SystemLogging, newConf *sysd.SystemLogging, attrset []bool, op string) (bool, error) {
+func (h *SYSDHandler) UpdateSystemLogging(origConf *sysd.SystemLogging, newConf *sysd.SystemLogging, attrset []bool, op []*sysd.PatchOpInfo) (bool, error) {
 	h.logger.Info(fmt.Sprintln("Original global config attrs:", origConf))
 	if newConf == nil {
 		err := errors.New("Invalid global Configuration")
@@ -82,7 +82,7 @@ func (h *SYSDHandler) UpdateSystemLogging(origConf *sysd.SystemLogging, newConf 
 	return h.SendGlobalLoggingConfig(newConf), nil
 }
 
-func (h *SYSDHandler) UpdateComponentLogging(origConf *sysd.ComponentLogging, newConf *sysd.ComponentLogging, attrset []bool, op string) (bool, error) {
+func (h *SYSDHandler) UpdateComponentLogging(origConf *sysd.ComponentLogging, newConf *sysd.ComponentLogging, attrset []bool, op []*sysd.PatchOpInfo) (bool, error) {
 	h.logger.Info(fmt.Sprintln("Original component config attrs:", origConf))
 	if newConf == nil {
 		err := errors.New("Invalid component Configuration")
@@ -123,7 +123,7 @@ func (h *SYSDHandler) CreateIpTableAcl(ipaclConfig *sysd.IpTableAcl) (bool, erro
 }
 
 func (h *SYSDHandler) UpdateIpTableAcl(origConf *sysd.IpTableAcl, newConf *sysd.IpTableAcl,
-	attrset []bool, op string) (bool, error) {
+	attrset []bool, op []*sysd.PatchOpInfo) (bool, error) {
 	err := errors.New("IpTableAcl update not supported")
 	return false, err
 }
@@ -179,7 +179,6 @@ func convertSystemParamThriftToModel(cfg *sysd.SystemParam) models.SystemParam {
 		Description: cfg.Description,
 		Version:     cfg.Version,
 		MgmtIp:      cfg.MgmtIp,
-		RouterId:    cfg.RouterId,
 		Hostname:    cfg.Hostname,
 		SwitchMac:   cfg.SwitchMac,
 		Vrf:         cfg.Vrf,
@@ -241,7 +240,7 @@ func (h *SYSDHandler) validatUpdateSystemParam(newCfg *sysd.SystemParam, attrset
 }
 
 func (h *SYSDHandler) UpdateSystemParam(org *sysd.SystemParam, new *sysd.SystemParam, attrset []bool,
-	op string) (bool, error) {
+	op []*sysd.PatchOpInfo) (bool, error) {
 	h.logger.Info(fmt.Sprintln("Received update for system param information", org, new, attrset))
 	if org == nil || new == nil {
 		return false, errors.New("Invalid information provided to server")
@@ -266,7 +265,6 @@ func (h *SYSDHandler) DeleteSystemParam(cfg *sysd.SystemParam) (bool, error) {
 func convertSystemParamStateToThrift(info models.SystemParamState, entry *sysd.SystemParamState) {
 	entry.Vrf = string(info.Vrf)
 	entry.SwitchMac = string(info.SwitchMac)
-	entry.RouterId = string(info.RouterId)
 	entry.MgmtIp = string(info.MgmtIp)
 	entry.Version = string(info.Version)
 	entry.Description = string(info.Description)
