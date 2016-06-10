@@ -28,7 +28,7 @@ import (
 	"errors"
 	"fmt"
 	"infra/sysd/sysdCommonDefs"
-	"models"
+	"models/objects"
 	"os"
 	"os/exec"
 	"strings"
@@ -243,9 +243,9 @@ func (server *SYSDServer) ConvertDaemonStateToThrift(ent DaemonState) *sysd.Daem
 	return dState
 }
 
-func (server *SYSDServer) ConvertDaemonStateToObj(ent DaemonState) models.DaemonState {
+func (server *SYSDServer) ConvertDaemonStateToObj(ent DaemonState) objects.DaemonState {
 	kaStr := fmt.Sprintf("Received %d keepalives", ent.RecvedKACount)
-	dState := models.DaemonState{
+	dState := objects.DaemonState{
 		Name:          ent.Name,
 		Enable:        ent.Enable,
 		State:         sysdCommonDefs.ConvertDaemonStateCodeToString(ent.State),

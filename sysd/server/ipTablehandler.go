@@ -13,18 +13,18 @@
 //	 See the License for the specific language governing permissions and
 //	 limitations under the License.
 //
-// _______  __       __________   ___      _______.____    __    ____  __  .___________.  ______  __    __  
-// |   ____||  |     |   ____\  \ /  /     /       |\   \  /  \  /   / |  | |           | /      ||  |  |  | 
-// |  |__   |  |     |  |__   \  V  /     |   (----` \   \/    \/   /  |  | `---|  |----`|  ,----'|  |__|  | 
-// |   __|  |  |     |   __|   >   <       \   \      \            /   |  |     |  |     |  |     |   __   | 
-// |  |     |  `----.|  |____ /  .  \  .----)   |      \    /\    /    |  |     |  |     |  `----.|  |  |  | 
-// |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__| 
-//                                                                                                           
+// _______  __       __________   ___      _______.____    __    ____  __  .___________.  ______  __    __
+// |   ____||  |     |   ____\  \ /  /     /       |\   \  /  \  /   / |  | |           | /      ||  |  |  |
+// |  |__   |  |     |  |__   \  V  /     |   (----` \   \/    \/   /  |  | `---|  |----`|  ,----'|  |__|  |
+// |   __|  |  |     |   __|   >   <       \   \      \            /   |  |     |  |     |  |     |   __   |
+// |  |     |  `----.|  |____ /  .  \  .----)   |      \    /\    /    |  |     |  |     |  `----.|  |  |  |
+// |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__|
+//
 
 package server
 
 import (
-	"models"
+	"models/objects"
 	"sysd"
 	"utils/dbutils"
 )
@@ -32,7 +32,7 @@ import (
 func (server *SYSDServer) ReadIpAclConfigFromDB(dbHdl *dbutils.DBUtil) error {
 	server.logger.Info("Reading Ip Acl Config From Db")
 	if dbHdl != nil {
-		var dbObj models.IpTableAcl
+		var dbObj objects.IpTableAcl
 		objList, err := dbHdl.GetAllObjFromDb(dbObj)
 		if err != nil {
 			server.logger.Err("DB query failed for IpTableAcl config")
@@ -40,8 +40,8 @@ func (server *SYSDServer) ReadIpAclConfigFromDB(dbHdl *dbutils.DBUtil) error {
 		}
 		for idx := 0; idx < len(objList); idx++ {
 			obj := sysd.NewIpTableAcl()
-			dbObject := objList[idx].(models.IpTableAcl)
-			models.ConvertsysdIpTableAclObjToThrift(&dbObject, obj)
+			dbObject := objList[idx].(objects.IpTableAcl)
+			objects.ConvertsysdIpTableAclObjToThrift(&dbObject, obj)
 			server.AddIpTableRule(obj, true /*restart*/)
 		}
 	}

@@ -27,7 +27,7 @@ import (
 	"errors"
 	"fmt"
 	"infra/sysd/server"
-	"models"
+	"models/objects"
 	"strings"
 	"sysd"
 	"utils/logging"
@@ -174,8 +174,8 @@ func (h *SYSDHandler) GetBulkDaemonState(fromIdx sysd.Int, count sysd.Int) (*sys
 	return daemonStateGetInfo, nil
 }
 
-func convertSystemParamThriftToModel(cfg *sysd.SystemParam) models.SystemParam {
-	confg := models.SystemParam{
+func convertSystemParamThriftToModel(cfg *sysd.SystemParam) objects.SystemParam {
+	confg := objects.SystemParam{
 		Description: cfg.Description,
 		Version:     cfg.Version,
 		MgmtIp:      cfg.MgmtIp,
@@ -262,7 +262,7 @@ func (h *SYSDHandler) DeleteSystemParam(cfg *sysd.SystemParam) (bool, error) {
 	return false, errors.New("Delete of system params for default vrf is not supported")
 }
 
-func convertSystemParamStateToThrift(info models.SystemParamState, entry *sysd.SystemParamState) {
+func convertSystemParamStateToThrift(info objects.SystemParamState, entry *sysd.SystemParamState) {
 	entry.Vrf = string(info.Vrf)
 	entry.SwitchMac = string(info.SwitchMac)
 	entry.MgmtIp = string(info.MgmtIp)

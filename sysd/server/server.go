@@ -29,7 +29,7 @@ import (
 	nanomsg "github.com/op/go-nanomsg"
 	"infra/sysd/iptables"
 	"infra/sysd/sysdCommonDefs"
-	"models"
+	"models/objects"
 	"os"
 	"os/signal"
 	"syscall"
@@ -77,13 +77,13 @@ type SYSDServer struct {
 	notificationCh           chan []byte
 	IptableAddCh             chan *sysd.IpTableAcl
 	IptableDelCh             chan *sysd.IpTableAcl
-	SystemParamConfig        chan models.SystemParam
+	SystemParamConfig        chan objects.SystemParam
 	KaRecvCh                 chan string
 	DaemonMap                map[string]*DaemonInfo
 	DaemonConfigCh           chan DaemonConfig
 	UpdateInfoInDbCh         chan string
 	DaemonRestartCh          chan string
-	SysInfo                  *models.SystemParam
+	SysInfo                  *objects.SystemParam
 	SysUpdCh                 chan *SystemParamUpdate
 }
 
@@ -99,7 +99,7 @@ func NewSYSDServer(logger *logging.Writer, dbHdl *dbutils.DBUtil, paramsDir stri
 	sysdServer.notificationCh = make(chan []byte)
 	sysdServer.IptableAddCh = make(chan *sysd.IpTableAcl)
 	sysdServer.IptableDelCh = make(chan *sysd.IpTableAcl)
-	sysdServer.SystemParamConfig = make(chan models.SystemParam)
+	sysdServer.SystemParamConfig = make(chan objects.SystemParam)
 	sysdServer.SysUpdCh = make(chan *SystemParamUpdate)
 	return sysdServer
 }
