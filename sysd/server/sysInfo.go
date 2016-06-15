@@ -26,20 +26,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"infra/sysd/sysdCommonDefs"
-	"models"
+	"models/objects"
 	"os/exec"
 )
 
 type SystemParamUpdate struct {
 	EntriesUpdated []string
-	NewCfg         *models.SystemParam
+	NewCfg         *objects.SystemParam
 }
 
 func (svr *SYSDServer) ReadSystemInfoFromDB() error {
 	svr.logger.Info("Reading System Information From Db")
 	dbHdl := svr.dbHdl
 	if dbHdl != nil {
-		var dbObj models.SystemParam
+		var dbObj objects.SystemParam
 		objList, err := dbHdl.GetAllObjFromDb(dbObj)
 		if err != nil {
 			svr.logger.Err("DB query failed for System Info")
@@ -47,7 +47,7 @@ func (svr *SYSDServer) ReadSystemInfoFromDB() error {
 		}
 		svr.logger.Info(fmt.Sprintln("Total System Entries are", len(objList)))
 		for idx := 0; idx < len(objList); idx++ {
-			dbObject := objList[idx].(models.SystemParam)
+			dbObject := objList[idx].(objects.SystemParam)
 			svr.SysInfo.SwitchMac = dbObject.SwitchMac
 			svr.SysInfo.MgmtIp = dbObject.MgmtIp
 			svr.SysInfo.Version = dbObject.Version
@@ -77,7 +77,7 @@ func (svr *SYSDServer) SendSystemUpdate() ([]byte, error) {
 	return notificationBuf, nil
 }
 
-func (svr *SYSDServer) copyAndSendSystemParam(cfg models.SystemParam) {
+func (svr *SYSDServer) copyAndSendSystemParam(cfg objects.SystemParam) {
 	sysInfo := svr.SysInfo
 	sysInfo.SwitchMac = cfg.SwitchMac
 	sysInfo.MgmtIp = cfg.MgmtIp
@@ -89,8 +89,8 @@ func (svr *SYSDServer) copyAndSendSystemParam(cfg models.SystemParam) {
 }
 
 // Initialize system information using json file...or whatever other means are
-func (svr *SYSDServer) InitSystemInfo(cfg models.SystemParam) {
-	svr.SysInfo = &models.SystemParam{}
+func (svr *SYSDServer) InitSystemInfo(cfg objects.SystemParam) {
+	svr.SysInfo = &objects.SystemParam{}
 	svr.copyAndSendSystemParam(cfg)
 }
 
@@ -100,11 +100,11 @@ func (svr *SYSDServer) SystemInfoCreated() bool {
 }
 
 // During Get calls we will use below api to read from run-time information
-func (svr *SYSDServer) GetSystemParam(name string) *models.SystemParamState {
+func (svr *SYSDServer) GetSystemParam(name string) *objects.SystemParamState {
 	if svr.SysInfo == nil || svr.SysInfo.Vrf != name {
 		return nil
 	}
-	sysParamsInfo := new(models.SystemParamState)
+	sysParamsInfo := new(objects.SystemParamState)
 
 	sysParamsInfo.Vrf = svr.SysInfo.Vrf
 	sysParamsInfo.SwitchMac = svr.SysInfo.SwitchMac
