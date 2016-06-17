@@ -1,6 +1,8 @@
-COMPS=sysd
+COMPS=sysd\
+	fMgrd
 
-IPCS=sysd
+IPCS=sysd\
+	fMgrd
 
 all: ipc exe 
 
