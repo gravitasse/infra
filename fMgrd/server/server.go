@@ -69,27 +69,37 @@ func (server *FMGRServer) RedisSub() {
 	for {
 		switch n := server.subHdl.Receive().(type) {
 		case redis.Message:
-			//server.logger.Info(fmt.Sprintln("Message: Channel:", n.Channel, "Data:", n.Data))
-			var evt events.PortStateEvent
+			var evt events.Event
 			err := json.Unmarshal(n.Data, &evt)
 			if err != nil {
-				server.logger.Err("Unable to Unmarshal the byte stream")
+				server.logger.Err(fmt.Sprintln("Unable to Unmarshal the byte stream", err))
 				continue
 			}
-			server.logger.Info(fmt.Sprintln(evt))
-			/*
-				case redis.PMessage:
-					//server.logger.Info(fmt.Sprintf("PMessage: Pattern:", n.Pattern, "Channel:", n.Channel, "Data:", n.Data))
-					var evt events.PortStateEvent
-					err := json.Unmarshal(n.Data, &evt)
-					if err != nil {
-						server.logger.Err("Unable to Unmarshal the byte stream")
-						continue
-					}
-					server.logger.Info(fmt.Sprintln(evt))
-			*/
+			server.logger.Info(fmt.Sprintln("OwnerId:", evt.OwnerId))
+			server.logger.Info(fmt.Sprintln("OwnerName:", evt.OwnerName))
+			server.logger.Info(fmt.Sprintln("EvtId:", evt.EvtId))
+			server.logger.Info(fmt.Sprintln("EventName:", evt.EventName))
+			server.logger.Info(fmt.Sprintln("Timestamp:", evt.TimeStamp))
+			server.logger.Info(fmt.Sprintln("Description:", evt.Description))
+			server.logger.Info(fmt.Sprintln("SrcObjName:", evt.SrcObjName))
+			keyMap, exist := events.EventKeyMap[evt.OwnerName]
+			if !exist {
+				server.logger.Info("Key map not found given Event")
+				continue
+			}
+			obj, exist := keyMap[evt.SrcObjName]
+			if !exist {
+				server.logger.Info("Src Object Name not found in Event Key Map")
+				continue
+			}
+			obj = evt.SrcObjKey
+			if err != nil {
+				server.logger.Err(fmt.Sprintln("Unable to Unmarshal the byte stream", err))
+				continue
+			}
+			server.logger.Info(fmt.Sprintln("Src Obj Key", obj))
+
 		case redis.Subscription:
-			//server.logger.Info(fmt.Sprintf("Subscription: ", n.Kind, n.Channel, n.Count))
 			if n.Count == 0 {
 				return
 			}
@@ -112,14 +122,13 @@ func (server *FMGRServer) InitServer(paramDir string) {
 	//defer server.dbHdl.Close()
 	server.subHdl = redis.PubSubConn{Conn: server.dbHdl}
 
-	server.subHdl.Subscribe("asicdPort")
-	//server.subHdl.PSubscribe("asicd*")
+	server.subHdl.Subscribe("ASICD")
+	server.subHdl.Subscribe("ARPD")
 	go server.RedisSub()
 
 }
 
 func (server *FMGRServer) StartServer(paramDir string) {
-	server.logger.Info(fmt.Sprintln("Inside Start Server...", paramDir))
 	server.InitServer(paramDir)
 	server.InitDone <- true
 	for {
