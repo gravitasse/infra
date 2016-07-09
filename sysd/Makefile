@@ -22,7 +22,7 @@ ifndef SR_CODE_BASE
 endif
 
 install:
-	install $(SR_CODE_BASE)/external/src/github.com/netfilter/libiptables/lib/libip4tc.so.0.1.0 $(DESTDIR)/sharedlib
+	@echo "SYSD has no files to install"
 
 clean:guard
 	$(RM) $(DESTDIR)/$(COMP_NAME) 
