@@ -1,8 +1,10 @@
 COMPS=sysd\
-	fMgrd
+	fMgrd\
+	platformd
 
 IPCS=sysd\
-	fMgrd
+	fMgrd\
+	platformd
 
 all: ipc exe 
 
