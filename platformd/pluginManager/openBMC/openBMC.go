@@ -49,8 +49,8 @@ func (driver *openBMCDriver) DeInit() error {
 	return nil
 }
 
-func (driver *openBMCDriver) GetFanState(fanId int32) (*objects.FanState, error) {
-	var retObj objects.FanState
+func (driver *openBMCDriver) GetFanState(fanId int32) (pluginCommon.FanState, error) {
+	var retObj pluginCommon.FanState
 	retObj.FanId = fanId
 	retObj.OperMode = "ON"
 	retObj.OperSpeed = 10000
@@ -58,7 +58,8 @@ func (driver *openBMCDriver) GetFanState(fanId int32) (*objects.FanState, error)
 	retObj.Status = "PRESENT"
 	retObj.Model = "OPENBMC"
 	retObj.SerialNum = "AABBCC112233"
-	return &retObj, nil
+	retObj.Valid = true
+	return retObj, nil
 }
 
 func (driver *openBMCDriver) GetFanConfig(fanId int32) (*objects.FanConfig, error) {
@@ -72,4 +73,13 @@ func (driver *openBMCDriver) GetFanConfig(fanId int32) (*objects.FanConfig, erro
 func (driver *openBMCDriver) UpdateFanConfig(cfg *objects.FanConfig) (bool, error) {
 	driver.logger.Info("Updating OpenBMC Fan Config")
 	return true, nil
+}
+
+func (driver *openBMCDriver) GetMaxNumOfFans() int {
+	driver.logger.Info("Inside OpenBMC: GetMaxNumOfFans()")
+	return 0
+}
+
+func (driver *openBMCDriver) GetAllFanState(state []pluginCommon.FanState, cnt int) error {
+	return nil
 }

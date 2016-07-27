@@ -23,10 +23,21 @@
 package onlp
 
 import (
+	"errors"
+	"fmt"
 	"infra/platformd/objects"
 	"infra/platformd/pluginManager/pluginCommon"
 	"utils/logging"
 )
+
+/*
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include "onlp.h"
+#include "pluginCommon.h"
+*/
+import "C"
 
 type onlpDriver struct {
 	logger logging.LoggerIntf
@@ -41,6 +52,10 @@ func NewONLPPlugin(params *pluginCommon.PluginInitParams) *onlpDriver {
 
 func (driver *onlpDriver) Init() error {
 	driver.logger.Info("Initializing onlp driver")
+	rv := int(C.Init())
+	if rv < 0 {
+		return errors.New("Error initializing Onlp Driver")
+	}
 	return nil
 }
 
@@ -49,16 +64,46 @@ func (driver *onlpDriver) DeInit() error {
 	return nil
 }
 
-func (driver *onlpDriver) GetFanState(fanId int32) (*objects.FanState, error) {
-	var retObj objects.FanState
-	retObj.FanId = fanId
-	retObj.OperMode = "ON"
-	retObj.OperSpeed = 10000
-	retObj.OperDirection = "B2F"
-	retObj.Status = "PRESENT"
-	retObj.Model = "ONLP"
-	retObj.SerialNum = "AABBCC112233"
-	return &retObj, nil
+func (driver *onlpDriver) GetFanState(fanId int32) (pluginCommon.FanState, error) {
+	var retObj pluginCommon.FanState
+	var fanInfo C.fan_info_t
+
+	retVal := int(C.GetFanState(&fanInfo, C.int(fanId)))
+	if retVal < 0 {
+		return retObj, errors.New(fmt.Sprintln("Unable to fetch Fan State of", fanId))
+	}
+	retObj.FanId = int32(fanInfo.FanId)
+	switch int(fanInfo.Mode) {
+	case pluginCommon.FAN_MODE_OFF:
+		retObj.OperMode = pluginCommon.FAN_MODE_OFF_STR
+	case pluginCommon.FAN_MODE_ON:
+		retObj.OperMode = pluginCommon.FAN_MODE_ON_STR
+	}
+	retObj.OperSpeed = int32(fanInfo.Speed)
+	//states[idx].OperDirection = fanInfo[idx].Direction
+	switch int(fanInfo.Direction) {
+	case pluginCommon.FAN_DIR_B2F:
+		retObj.OperDirection = pluginCommon.FAN_DIR_B2F_STR
+	case pluginCommon.FAN_DIR_F2B:
+		retObj.OperDirection = pluginCommon.FAN_DIR_F2B_STR
+	case pluginCommon.FAN_DIR_INVALID:
+		retObj.OperDirection = pluginCommon.FAN_DIR_INVALID_STR
+	}
+	//states[idx].Status = fanInfo[idx].Status
+	switch int(fanInfo.Status) {
+	case pluginCommon.FAN_STATUS_PRESENT:
+		retObj.Status = pluginCommon.FAN_STATUS_PRESENT_STR
+	case pluginCommon.FAN_STATUS_MISSING:
+		retObj.Status = pluginCommon.FAN_STATUS_MISSING_STR
+	case pluginCommon.FAN_STATUS_FAILED:
+		retObj.Status = pluginCommon.FAN_STATUS_FAILED_STR
+	case pluginCommon.FAN_STATUS_NORMAL:
+		retObj.Status = pluginCommon.FAN_STATUS_NORMAL_STR
+	}
+	retObj.Model = C.GoString(&fanInfo.Model[0])
+	//states[idx].Model = ""
+	retObj.SerialNum = C.GoString(&fanInfo.SerialNum[0])
+	return retObj, nil
 }
 
 func (driver *onlpDriver) GetFanConfig(fanId int32) (*objects.FanConfig, error) {
@@ -72,4 +117,57 @@ func (driver *onlpDriver) GetFanConfig(fanId int32) (*objects.FanConfig, error) 
 func (driver *onlpDriver) UpdateFanConfig(cfg *objects.FanConfig) (bool, error) {
 	driver.logger.Info("Updating Onlp Fan Config")
 	return true, nil
+}
+
+func (driver *onlpDriver) GetMaxNumOfFans() int {
+	return int(C.GetMaxNumOfFans())
+}
+
+func (driver *onlpDriver) GetAllFanState(states []pluginCommon.FanState, cnt int) error {
+	var fanInfo []C.fan_info_t
+
+	fanInfo = make([]C.fan_info_t, cnt)
+	retVal := int(C.GetAllFanState(&fanInfo[0], C.int(cnt)))
+	if retVal < 0 {
+		return errors.New(fmt.Sprintln("Unable to fetch the fan State:"))
+	}
+	for idx := 0; idx < cnt; idx++ {
+		if int(fanInfo[idx].valid) == 0 {
+			states[idx].Valid = false
+			continue
+		}
+		states[idx].Valid = true
+		states[idx].FanId = int32(fanInfo[idx].FanId)
+		switch int(fanInfo[idx].Mode) {
+		case pluginCommon.FAN_MODE_OFF:
+			states[idx].OperMode = pluginCommon.FAN_MODE_OFF_STR
+		case pluginCommon.FAN_MODE_ON:
+			states[idx].OperMode = pluginCommon.FAN_MODE_ON_STR
+		}
+		states[idx].OperSpeed = int32(fanInfo[idx].Speed)
+		//states[idx].OperDirection = fanInfo[idx].Direction
+		switch int(fanInfo[idx].Direction) {
+		case pluginCommon.FAN_DIR_B2F:
+			states[idx].OperDirection = pluginCommon.FAN_DIR_B2F_STR
+		case pluginCommon.FAN_DIR_F2B:
+			states[idx].OperDirection = pluginCommon.FAN_DIR_F2B_STR
+		case pluginCommon.FAN_DIR_INVALID:
+			states[idx].OperDirection = pluginCommon.FAN_DIR_INVALID_STR
+		}
+		//states[idx].Status = fanInfo[idx].Status
+		switch int(fanInfo[idx].Status) {
+		case pluginCommon.FAN_STATUS_PRESENT:
+			states[idx].Status = pluginCommon.FAN_STATUS_PRESENT_STR
+		case pluginCommon.FAN_STATUS_MISSING:
+			states[idx].Status = pluginCommon.FAN_STATUS_MISSING_STR
+		case pluginCommon.FAN_STATUS_FAILED:
+			states[idx].Status = pluginCommon.FAN_STATUS_FAILED_STR
+		case pluginCommon.FAN_STATUS_NORMAL:
+			states[idx].Status = pluginCommon.FAN_STATUS_NORMAL_STR
+		}
+		states[idx].Model = C.GoString(&fanInfo[idx].Model[0])
+		//states[idx].Model = ""
+		states[idx].SerialNum = C.GoString(&fanInfo[idx].SerialNum[0])
+	}
+	return nil
 }

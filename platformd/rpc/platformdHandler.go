@@ -25,7 +25,7 @@ package rpc
 
 import (
 	//	"errors"
-	"fmt"
+	//"fmt"
 	"infra/platformd/api"
 	"platformd"
 )
@@ -69,7 +69,6 @@ func (rpcHdl *rpcServiceHandler) GetBulkFanState(fromIdx, count platformd.Int) (
 	var getBulkObj platformd.FanStateGetInfo
 	var err error
 
-	fmt.Println("=====Inside GetBulkFanState====")
 	info, err := api.GetBulkFanState(int(fromIdx), int(count))
 	if err != nil {
 		return nil, err
@@ -114,7 +113,6 @@ func (rpcHdl *rpcServiceHandler) GetBulkFan(fromIdx, count platformd.Int) (*plat
 	var getBulkObj platformd.FanGetInfo
 	var err error
 
-	fmt.Println("=====Inside GetBulkFanConfig====")
 	info, err := api.GetBulkFanConfig(int(fromIdx), int(count))
 	if err != nil {
 		return nil, err

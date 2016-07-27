@@ -36,9 +36,11 @@ import (
 type PluginIntf interface {
 	Init() error
 	DeInit() error
-	GetFanState(fanId int32) (*objects.FanState, error)
+	GetFanState(fanId int32) (pluginCommon.FanState, error)
 	GetFanConfig(fanId int32) (*objects.FanConfig, error)
 	UpdateFanConfig(cfg *objects.FanConfig) (bool, error)
+	GetMaxNumOfFans() int
+	GetAllFanState(state []pluginCommon.FanState, count int) error
 }
 
 type ResourceManagers struct {
@@ -83,6 +85,7 @@ func NewPluginMgr(pluginName string, initParams *pluginCommon.PluginInitParams) 
 }
 
 func (pMgr *PluginManager) Init() error {
+	pMgr.plugin.Init()
 	pMgr.SysManager.Init(pMgr.logger, pMgr.plugin)
 	pMgr.FanManager.Init(pMgr.logger, pMgr.plugin)
 	pMgr.PsuManager.Init(pMgr.logger, pMgr.plugin)

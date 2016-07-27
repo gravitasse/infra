@@ -23,27 +23,47 @@
 
 package pluginCommon
 
-import (
-	"utils/logging"
-)
-
-//Plugin name constants
-const (
-	ONLP_PLUGIN    = "onlp"
-	OpenBMC_PLUGIN = "openbmc"
-)
-
-type PluginInitParams struct {
-	Logger logging.LoggerIntf
-}
-
-type FanState struct {
-	FanId         int32
+type FanStateStruct struct {
 	OperMode      string
 	OperSpeed     int32
 	OperDirection string
 	Status        string
-	Model         string
-	SerialNum     string
-	Valid         bool
+	Model         [100]byte
+	SerialNum     [100]byte
 }
+
+const (
+	FAN_MODE_OFF int = 0x0
+	FAN_MODE_ON  int = 0x1
+)
+
+const (
+	FAN_MODE_OFF_STR string = "OFF"
+	FAN_MODE_ON_STR         = "ON"
+)
+
+const (
+	FAN_DIR_B2F     int = 0x0
+	FAN_DIR_F2B     int = 0x1
+	FAN_DIR_INVALID     = 0x2
+)
+
+const (
+	FAN_DIR_B2F_STR     string = "Back2Front"
+	FAN_DIR_F2B_STR            = "Front2Back"
+	FAN_DIR_INVALID_STR        = "InvalidDir"
+)
+
+const (
+	FAN_STATUS_PRESENT int = 0x0
+	FAN_STATUS_MISSING     = 0x2
+	FAN_STATUS_FAILED      = 0x3
+	FAN_STATUS_NORMAL      = 0x4
+)
+
+const (
+	FAN_STATUS_PRESENT_STR string = "PRESENT"
+	FAN_STATUS_MISSING_STR        = "MISSING"
+	FAN_STATUS_FAILED_STR         = "FAILED"
+	FAN_STATUS_NORMAL_STR         = "NORMAL"
+)

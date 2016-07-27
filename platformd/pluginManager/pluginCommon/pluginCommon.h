@@ -20,30 +20,41 @@
 // |  |     |  `----.|  |____ /  .  \  .----)   |      \    /\    /    |  |     |  |     |  `----.|  |  |  |
 // |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__|
 //
+#ifndef PLUGINCOMMON_H
+#define PLUGINCOMMON_H
 
-package pluginCommon
+#include <stdio.h>
 
-import (
-	"utils/logging"
-)
+typedef enum fan_dir_e {
+	FAN_DIR_B2F,
+	FAN_DIR_F2B,
+	FAN_DIR_INVALID,
+} fan_dir_t;
 
-//Plugin name constants
-const (
-	ONLP_PLUGIN    = "onlp"
-	OpenBMC_PLUGIN = "openbmc"
-)
+typedef enum fan_mode_e {
+    FAN_MODE_OFF,
+    FAN_MODE_ON,
+} fan_mode_t;
 
-type PluginInitParams struct {
-	Logger logging.LoggerIntf
-}
+typedef enum fan_status_e {
+    FAN_STATUS_PRESENT,
+    FAN_STATUS_MISSING,
+    FAN_STATUS_FAILED,
+    FAN_STATUS_NORMAL,
+} fan_status_t;
 
-type FanState struct {
-	FanId         int32
-	OperMode      string
-	OperSpeed     int32
-	OperDirection string
-	Status        string
-	Model         string
-	SerialNum     string
-	Valid         bool
-}
+
+typedef struct fan_info {
+	int valid;
+	int FanId;
+	fan_mode_t Mode;
+	int Speed;
+	fan_dir_t Direction;
+	fan_status_t Status;
+	char Model[100];
+	char SerialNum[100];
+} fan_info_t;
+
+
+
+#endif // PLUGINCOMMON_H

@@ -27,12 +27,34 @@ import (
 	"errors"
 	"fmt"
 	"infra/platformd/objects"
+	"infra/platformd/pluginManager/pluginCommon"
+	"sync"
 	"utils/logging"
 )
 
+type FanId int32
+
+type FanState struct {
+	OperMode      string
+	OperSpeed     int32
+	OperDirection string
+	Status        string
+	Model         string
+	SerialNum     string
+}
+
+type FanConfig struct {
+	AdminSpeed     int32
+	AdminDirection string
+}
+
 type FanManager struct {
-	logger logging.LoggerIntf
-	plugin PluginIntf
+	dbMutex   sync.RWMutex
+	logger    logging.LoggerIntf
+	plugin    PluginIntf
+	fanIdList []FanId
+	stateDB   map[FanId]FanState
+	configDB  map[FanId]FanConfig
 }
 
 var FanMgr FanManager
@@ -40,6 +62,29 @@ var FanMgr FanManager
 func (fMgr *FanManager) Init(logger logging.LoggerIntf, plugin PluginIntf) {
 	fMgr.logger = logger
 	fMgr.plugin = plugin
+	fMgr.stateDB = make(map[FanId]FanState)
+	fMgr.configDB = make(map[FanId]FanConfig)
+	numOfFans := fMgr.plugin.GetMaxNumOfFans()
+	fanState := make([]pluginCommon.FanState, numOfFans)
+	fMgr.plugin.GetAllFanState(fanState, numOfFans)
+	for _, fan := range fanState {
+		if fan.Valid == false {
+			continue
+		}
+		fanEnt, _ := fMgr.stateDB[FanId(fan.FanId)]
+		fanEnt.OperMode = fan.OperMode
+		fanEnt.OperSpeed = fan.OperSpeed
+		fanEnt.OperDirection = fan.OperDirection
+		fanEnt.Status = fan.Status
+		fanEnt.Model = fan.Model
+		fanEnt.SerialNum = fan.SerialNum
+		fMgr.stateDB[FanId(fan.FanId)] = fanEnt
+		fanCfgEnt, _ := fMgr.configDB[FanId(fan.FanId)]
+		fanCfgEnt.AdminDirection = fan.OperDirection
+		fanCfgEnt.AdminSpeed = fan.OperSpeed
+		fMgr.configDB[FanId(fan.FanId)] = fanCfgEnt
+		fMgr.fanIdList = append(fMgr.fanIdList, FanId(fan.FanId))
+	}
 	fMgr.logger.Info("Fan Manager Init()")
 }
 
@@ -48,52 +93,104 @@ func (fMgr *FanManager) Deinit() {
 }
 
 func (fMgr *FanManager) GetFanState(fanId int32) (*objects.FanState, error) {
+	var fanObj objects.FanState
 	if fMgr.plugin == nil {
 		return nil, errors.New("Invalid platform plugin")
 	}
-	return fMgr.plugin.GetFanState(fanId)
+	fanStateEnt, exist := fMgr.stateDB[FanId(fanId)]
+	if !exist {
+		return nil, errors.New("Invalid FanId")
+	}
+
+	fanState, err := fMgr.plugin.GetFanState(fanId)
+	if err != nil {
+		return nil, err
+	}
+	fanStateEnt.OperMode = fanState.OperMode
+	fanStateEnt.OperSpeed = fanState.OperSpeed
+	fanStateEnt.OperDirection = fanState.OperDirection
+	fanStateEnt.Status = fanState.Status
+	fanStateEnt.Model = fanState.Model
+	fanStateEnt.SerialNum = fanState.SerialNum
+	fMgr.stateDB[FanId(fanId)] = fanStateEnt
+	fanObj.FanId = fanId
+	fanObj.OperMode = fanState.OperMode
+	fanObj.OperSpeed = fanState.OperSpeed
+	fanObj.OperDirection = fanState.OperDirection
+	fanObj.Status = fanState.Status
+	fanObj.Model = fanState.Model
+	fanObj.SerialNum = fanState.SerialNum
+	return &fanObj, err
 }
 
-func (fMgr *FanManager) GetBulkFanState(fromIdx int, count int) (*objects.FanStateGetInfo, error) {
+func (fMgr *FanManager) GetBulkFanState(fromIdx int, cnt int) (*objects.FanStateGetInfo, error) {
 	var retObj objects.FanStateGetInfo
-	var fanId int32
-	fanId = 1
 	if fMgr.plugin == nil {
 		return nil, errors.New("Invalid platform plugin")
 	}
-	obj, err := fMgr.plugin.GetFanState(fanId)
-	if err != nil {
-		fMgr.logger.Err(fmt.Sprintln("Error getting the fan state for fanId:", fanId))
+	if fromIdx >= len(fMgr.fanIdList) {
+		return nil, errors.New("Invalid range")
 	}
-	retObj.List = append(retObj.List, obj)
-	retObj.More = false
-	retObj.EndIdx = 1
-	retObj.Count = 1
+	if fromIdx+cnt > len(fMgr.fanIdList) {
+		retObj.EndIdx = len(fMgr.fanIdList)
+		retObj.More = false
+		retObj.Count = 0
+	} else {
+		retObj.EndIdx = fromIdx + cnt
+		retObj.More = true
+		retObj.Count = len(fMgr.fanIdList) - retObj.EndIdx + 1
+	}
+	for idx := fromIdx; idx < retObj.EndIdx; idx++ {
+		fanId := int32(fMgr.fanIdList[idx])
+		obj, err := fMgr.GetFanState(fanId)
+		if err != nil {
+			fMgr.logger.Err(fmt.Sprintln("Error getting the fan state for fanId:", fanId))
+		}
+		retObj.List = append(retObj.List, obj)
+	}
 	return &retObj, nil
 }
 
 func (fMgr *FanManager) GetFanConfig(fanId int32) (*objects.FanConfig, error) {
+	var fanObj objects.FanConfig
 	if fMgr.plugin == nil {
 		return nil, errors.New("Invalid platform plugin")
 	}
-	return fMgr.plugin.GetFanConfig(fanId)
+	fanCfgEnt, exist := fMgr.configDB[FanId(fanId)]
+	if !exist {
+		return nil, errors.New("Invalid FanId")
+	}
+	fanObj.FanId = fanId
+	fanObj.AdminSpeed = fanCfgEnt.AdminSpeed
+	fanObj.AdminDirection = fanCfgEnt.AdminDirection
+	return &fanObj, nil
 }
 
-func (fMgr *FanManager) GetBulkFanConfig(fromIdx int, count int) (*objects.FanConfigGetInfo, error) {
+func (fMgr *FanManager) GetBulkFanConfig(fromIdx int, cnt int) (*objects.FanConfigGetInfo, error) {
 	var retObj objects.FanConfigGetInfo
-	var fanId int32
-	fanId = 1
 	if fMgr.plugin == nil {
 		return nil, errors.New("Invalid platform plugin")
 	}
-	obj, err := fMgr.plugin.GetFanConfig(fanId)
-	if err != nil {
-		fMgr.logger.Err(fmt.Sprintln("Error getting the fan config for fanId:", fanId))
+	if fromIdx >= len(fMgr.fanIdList) {
+		return nil, errors.New("Invalid range")
 	}
-	retObj.List = append(retObj.List, obj)
-	retObj.More = false
-	retObj.EndIdx = 1
-	retObj.Count = 1
+	if fromIdx+cnt > len(fMgr.fanIdList) {
+		retObj.EndIdx = len(fMgr.fanIdList)
+		retObj.More = false
+		retObj.Count = 0
+	} else {
+		retObj.EndIdx = fromIdx + cnt
+		retObj.More = true
+		retObj.Count = len(fMgr.fanIdList) - retObj.EndIdx + 1
+	}
+	for idx := fromIdx; idx < retObj.EndIdx; idx++ {
+		fanId := int32(fMgr.fanIdList[idx])
+		obj, err := fMgr.GetFanConfig(fanId)
+		if err != nil {
+			fMgr.logger.Err(fmt.Sprintln("Error getting the fan state for fanId:", fanId))
+		}
+		retObj.List = append(retObj.List, obj)
+	}
 	return &retObj, nil
 }
 
