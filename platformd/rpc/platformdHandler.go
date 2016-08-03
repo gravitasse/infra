@@ -24,32 +24,30 @@
 package rpc
 
 import (
-	//	"errors"
-	//"fmt"
 	"infra/platformd/api"
 	"platformd"
 )
 
-func (rpcHdl *rpcServiceHandler) GetPlatformSystemState(objName string) (*platformd.PlatformSystemState, error) {
-	var rpcObj *platformd.PlatformSystemState
+func (rpcHdl *rpcServiceHandler) GetPlatformState(objName string) (*platformd.PlatformState, error) {
+	var rpcObj *platformd.PlatformState
 
-	obj, err := api.GetPlatformSystemState(objName)
+	obj, err := api.GetPlatformState(objName)
 	if err == nil {
-		rpcObj = convertToRPCFmtPlatformSystemState(obj)
+		rpcObj = convertToRPCFmtPlatformState(obj)
 	}
 	return rpcObj, err
 }
 
-func (rpcHdl *rpcServiceHandler) GetBulkPlatformSystemState(fromIdx, count platformd.Int) (*platformd.PlatformSystemStateGetInfo, error) {
-	var getBulkObj platformd.PlatformSystemStateGetInfo
+func (rpcHdl *rpcServiceHandler) GetBulkPlatformState(fromIdx, count platformd.Int) (*platformd.PlatformStateGetInfo, error) {
+	var getBulkObj platformd.PlatformStateGetInfo
 
-	info, err := api.GetBulkPlatformSystemState(int(fromIdx), int(count))
+	info, err := api.GetBulkPlatformState(int(fromIdx), int(count))
 	getBulkObj.StartIdx = fromIdx
 	getBulkObj.EndIdx = platformd.Int(info.EndIdx)
 	getBulkObj.More = info.More
 	getBulkObj.Count = platformd.Int(len(info.List))
 	for idx := 0; idx < len(info.List); idx++ {
-		getBulkObj.PlatformSystemStateList = append(getBulkObj.PlatformSystemStateList, convertToRPCFmtPlatformSystemState(info.List[idx]))
+		getBulkObj.PlatformStateList = append(getBulkObj.PlatformStateList, convertToRPCFmtPlatformState(info.List[idx]))
 	}
 	return &getBulkObj, err
 }
@@ -125,4 +123,147 @@ func (rpcHdl *rpcServiceHandler) GetBulkFan(fromIdx, count platformd.Int) (*plat
 		getBulkObj.FanList = append(getBulkObj.FanList, convertToRPCFmtFanConfig(info.List[idx]))
 	}
 	return &getBulkObj, err
+}
+
+// TODO
+func (rpcHdl *rpcServiceHandler) GetBulkSfp(fromIdx, count platformd.Int) (*platformd.SfpGetInfo, error) {
+	var getBulkObj platformd.SfpGetInfo
+	var err error
+
+	return &getBulkObj, err
+}
+
+func (rpcHdl *rpcServiceHandler) CreateSfp(config *platformd.Sfp) (bool, error) {
+	return true, nil
+}
+
+func (rpcHdl *rpcServiceHandler) DeleteSfp(config *platformd.Sfp) (bool, error) {
+	return true, nil
+}
+
+func (rpcHdl *rpcServiceHandler) UpdateSfp(oldConfig *platformd.Sfp, newConfig *platformd.Sfp, attrset []bool, op []*platformd.PatchOpInfo) (bool, error) {
+	return false, nil
+}
+
+func (rpcHdl *rpcServiceHandler) GetSfp(sfpID int32) (*platformd.Sfp, error) {
+	var rpcObj platformd.Sfp
+
+	return &rpcObj, nil
+}
+
+func (rpcHdl *rpcServiceHandler) GetBulkSfpState(fromIdx, count platformd.Int) (*platformd.SfpStateGetInfo, error) {
+	var obj platformd.SfpStateGetInfo
+
+	return &obj, nil
+}
+
+func (rpcHdl *rpcServiceHandler) GetSfpState(sfpId int32) (*platformd.SfpState, error) {
+	var obj platformd.SfpState
+
+	return &obj, nil
+}
+
+// TODO
+func (rpcHdl *rpcServiceHandler) CreateLed(config *platformd.Led) (bool, error) {
+	return true, nil
+}
+
+func (rpcHdl *rpcServiceHandler) DeleteLed(config *platformd.Led) (bool, error) {
+	return true, nil
+}
+
+func (rpcHdl *rpcServiceHandler) UpdateLed(oldConfig *platformd.Led, newConfig *platformd.Led, attrset []bool, op []*platformd.PatchOpInfo) (bool, error) {
+	return false, nil
+}
+
+func (rpcHdl *rpcServiceHandler) GetBulkLed(fromIdx, count platformd.Int) (*platformd.LedGetInfo, error) {
+	var getBulkObj platformd.LedGetInfo
+	var err error
+
+	return &getBulkObj, err
+}
+
+func (rpcHdl *rpcServiceHandler) GetLed(ledID int32) (*platformd.Led, error) {
+	var rpcObj platformd.Led
+
+	return &rpcObj, nil
+}
+
+func (rpcHdl *rpcServiceHandler) GetBulkLedState(fromIdx, count platformd.Int) (*platformd.LedStateGetInfo, error) {
+	var obj platformd.LedStateGetInfo
+
+	return &obj, nil
+}
+
+func (rpcHdl *rpcServiceHandler) GetLedState(sfpId int32) (*platformd.LedState, error) {
+	var obj platformd.LedState
+
+	return &obj, nil
+}
+
+func (rpcHdl *rpcServiceHandler) GetBulkThermalState(fromIdx, count platformd.Int) (*platformd.ThermalStateGetInfo, error) {
+	var getBulkObj platformd.ThermalStateGetInfo
+	var err error
+
+	info, err := api.GetBulkThermalState(int(fromIdx), int(count))
+	if err != nil {
+		return nil, err
+	}
+	getBulkObj.StartIdx = fromIdx
+	getBulkObj.EndIdx = platformd.Int(info.EndIdx)
+	getBulkObj.More = info.More
+	getBulkObj.Count = platformd.Int(len(info.List))
+	for idx := 0; idx < len(info.List); idx++ {
+		getBulkObj.ThermalStateList = append(getBulkObj.ThermalStateList, convertToRPCFmtThermalState(info.List[idx]))
+	}
+	return &getBulkObj, err
+}
+
+func (rpcHdl *rpcServiceHandler) GetThermalState(thermalId int32) (*platformd.ThermalState, error) {
+	var rpcObj *platformd.ThermalState
+	var err error
+
+	obj, err := api.GetThermalState(thermalId)
+	if err == nil {
+		rpcObj = convertToRPCFmtThermalState(obj)
+	}
+	return rpcObj, err
+
+}
+
+func (rpcHdl *rpcServiceHandler) CreatePsu(config *platformd.Psu) (bool, error) {
+	return true, nil
+}
+
+func (rpcHdl *rpcServiceHandler) DeletePsu(config *platformd.Psu) (bool, error) {
+	return true, nil
+}
+
+func (rpcHdl *rpcServiceHandler) UpdatePsu(oldConfig *platformd.Psu, newConfig *platformd.Psu, attrset []bool, op []*platformd.PatchOpInfo) (bool, error) {
+	return false, nil
+}
+
+func (rpcHdl *rpcServiceHandler) GetBulkPsu(fromIdx, count platformd.Int) (*platformd.PsuGetInfo, error) {
+	var getBulkObj platformd.PsuGetInfo
+	var err error
+
+	return &getBulkObj, err
+}
+
+func (rpcHdl *rpcServiceHandler) GetPsu(psuID int32) (*platformd.Psu, error) {
+	var rpcObj platformd.Psu
+
+	return &rpcObj, nil
+}
+
+func (rpcHdl *rpcServiceHandler) GetBulkPsuState(fromIdx, count platformd.Int) (*platformd.PsuStateGetInfo, error) {
+	var obj platformd.PsuStateGetInfo
+
+	return &obj, nil
+}
+
+func (rpcHdl *rpcServiceHandler) GetPsuState(PsuId int32) (*platformd.PsuState, error) {
+	var obj platformd.PsuState
+
+	return &obj, nil
 }

@@ -30,6 +30,8 @@ import (
 
 type serverCfgFileInfo struct {
 	PluginName string `json:"PluginName"`
+	IpAddr     string `json:"BMCIpAddr"`
+	Port       string `json:"Port"`
 }
 
 func parseCfgFile(cfgFileName string) (*serverCfgFileInfo, error) {

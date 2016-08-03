@@ -21,22 +21,33 @@
 // |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__|
 //
 
-package objects
+package server
 
-type PlatformState struct {
-	ObjName      string
-	ProductName  string
-	SerialNum    string
-	Manufacturer string
-	Vendor       string
-	Release      string
-	PlatformName string
-	Version      string
+import (
+	"infra/platformd/objects"
+)
+
+func (svr *PlatformdServer) getSfpState(sfpId int32) (*objects.SfpState, error) {
+	retObj, err := svr.pluginMgr.GetSfpState(sfpId)
+	return retObj, err
 }
 
-type PlatformStateGetInfo struct {
-	EndIdx int
-	Count  int
-	More   bool
-	List   []*PlatformState
+func (svr *PlatformdServer) getBulkSfpState(fromIdx int, count int) (*objects.SfpStateGetInfo, error) {
+	retObj, err := svr.pluginMgr.GetBulkSfpState(fromIdx, count)
+	return retObj, err
+}
+
+func (svr *PlatformdServer) getSfpConfig(sfpId int32) (*objects.SfpConfig, error) {
+	retObj, err := svr.pluginMgr.GetSfpConfig(sfpId)
+	return retObj, err
+}
+
+func (svr *PlatformdServer) getBulkSfpConfig(fromIdx int, count int) (*objects.SfpConfigGetInfo, error) {
+	retObj, err := svr.pluginMgr.GetBulkSfpConfig(fromIdx, count)
+	return retObj, err
+}
+
+func (svr *PlatformdServer) updateSfpConfig(oldCfg *objects.SfpConfig, newCfg *objects.SfpConfig, attrset []bool) (bool, error) {
+	ret, err := svr.pluginMgr.UpdateSfpConfig(oldCfg, newCfg, attrset)
+	return ret, err
 }

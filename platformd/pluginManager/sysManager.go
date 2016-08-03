@@ -24,7 +24,10 @@
 package pluginManager
 
 import (
-	//"fmt"
+	"errors"
+	"fmt"
+	"infra/platformd/objects"
+	"infra/platformd/pluginManager/pluginCommon"
 	"utils/logging"
 )
 
@@ -43,4 +46,47 @@ func (sMgr *SysManager) Init(logger logging.LoggerIntf, plugin PluginIntf) {
 
 func (sMgr *SysManager) Deinit() {
 	sMgr.logger.Info("System Manager Deinit()")
+}
+
+func (sMgr *SysManager) GetPlatformState(sysName string) (*objects.PlatformState, error) {
+	var retObj objects.PlatformState
+	var platInfo pluginCommon.PlatformState
+	if sMgr.plugin == nil {
+		return nil, errors.New("Invalid platform plugin")
+	}
+	platInfo, err := sMgr.plugin.GetPlatformState()
+	if err != nil {
+		sMgr.logger.Err(fmt.Sprintln("Error getting Platform Info"))
+		return &retObj, err
+	}
+
+	retObj.ObjName = sysName
+	retObj.ProductName = platInfo.ProductName
+	retObj.SerialNum = platInfo.SerialNum
+	retObj.Manufacturer = platInfo.Manufacturer
+	retObj.Vendor = platInfo.Vendor
+	retObj.Release = platInfo.Release
+	retObj.PlatformName = platInfo.PlatformName
+	retObj.Version = platInfo.Version
+
+	return &retObj, nil
+}
+
+func (sMgr *SysManager) GetBulkPlatformState(fromIdx int, cnt int) (*objects.PlatformStateGetInfo, error) {
+	var retObj objects.PlatformStateGetInfo
+	if sMgr.plugin == nil {
+		return nil, errors.New("Invalid platform plugin")
+	}
+	if fromIdx != 0 {
+		return nil, errors.New("Invalid range for getBulk")
+	}
+	retObj.EndIdx = 0
+	retObj.More = false
+	retObj.Count = 0
+	obj, err := sMgr.GetPlatformState("Platform")
+	if err != nil {
+		return nil, errors.New("Error getting the platform state ")
+	}
+	retObj.List = append(retObj.List, obj)
+	return &retObj, nil
 }

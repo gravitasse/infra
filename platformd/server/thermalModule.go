@@ -21,22 +21,18 @@
 // |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__|
 //
 
-package objects
+package server
 
-type PlatformState struct {
-	ObjName      string
-	ProductName  string
-	SerialNum    string
-	Manufacturer string
-	Vendor       string
-	Release      string
-	PlatformName string
-	Version      string
+import (
+	"infra/platformd/objects"
+)
+
+func (svr *PlatformdServer) getThermalState(thermalId int32) (*objects.ThermalState, error) {
+	retObj, err := svr.pluginMgr.GetThermalState(thermalId)
+	return retObj, err
 }
 
-type PlatformStateGetInfo struct {
-	EndIdx int
-	Count  int
-	More   bool
-	List   []*PlatformState
+func (svr *PlatformdServer) getBulkThermalState(fromIdx int, count int) (*objects.ThermalStateGetInfo, error) {
+	retObj, err := svr.pluginMgr.GetBulkThermalState(fromIdx, count)
+	return retObj, err
 }

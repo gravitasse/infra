@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	DMN_NAME = "PLATFORMD"
+	DMN_NAME = "platformd"
 	CFG_FILE = "platformd.conf"
 	CFG_DIR  = "/etc/flexswitch/"
 )
@@ -47,6 +47,7 @@ type platformDaemon struct {
 var dmn platformDaemon
 
 func main() {
+	var err error
 	// Get base daemon handle and initialize
 	dmn.FSBaseDmn = dmnBase.NewBaseDmn(DMN_NAME, DMN_NAME)
 	ok := dmn.Init()
@@ -63,7 +64,11 @@ func main() {
 		DbHdl:       dmn.DbHdl,
 		Logger:      dmn.FSBaseDmn.Logger,
 	}
-	dmn.server = server.NewPlatformdServer(InitParams)
+	dmn.server, err = server.NewPlatformdServer(InitParams)
+	if err != nil {
+		panic("Unable to Initialize Platform Daemon Plugin")
+		return
+	}
 	go dmn.server.Serve()
 
 	// Initialize api layer

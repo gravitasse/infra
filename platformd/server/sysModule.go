@@ -21,22 +21,19 @@
 // |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__|
 //
 
-package objects
+package server
 
-type PlatformState struct {
-	ObjName      string
-	ProductName  string
-	SerialNum    string
-	Manufacturer string
-	Vendor       string
-	Release      string
-	PlatformName string
-	Version      string
+import (
+	"infra/platformd/objects"
+)
+
+func (svr *PlatformdServer) getPlatformState(platName string) (*objects.PlatformState, error) {
+	retObj, err := svr.pluginMgr.GetPlatformState(platName)
+
+	return retObj, err
 }
 
-type PlatformStateGetInfo struct {
-	EndIdx int
-	Count  int
-	More   bool
-	List   []*PlatformState
+func (svr *PlatformdServer) getBulkPlatformState(fromIdx int, count int) (*objects.PlatformStateGetInfo, error) {
+	retObj, err := svr.pluginMgr.GetBulkPlatformState(fromIdx, count)
+	return retObj, err
 }

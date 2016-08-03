@@ -26,6 +26,7 @@ package pluginManager
 import (
 	"fmt"
 	"infra/platformd/objects"
+	"infra/platformd/pluginManager/dummy"
 	"infra/platformd/pluginManager/onlp"
 	"infra/platformd/pluginManager/openBMC"
 	"infra/platformd/pluginManager/pluginCommon"
@@ -41,6 +42,13 @@ type PluginIntf interface {
 	UpdateFanConfig(cfg *objects.FanConfig) (bool, error)
 	GetMaxNumOfFans() int
 	GetAllFanState(state []pluginCommon.FanState, count int) error
+	GetSfpState(sfpId int32) (pluginCommon.SfpState, error)
+	GetSfpConfig(sfpId int32) (*objects.SfpConfig, error)
+	UpdateSfpConfig(cfg *objects.SfpConfig) (bool, error)
+	GetAllSfpState(state []pluginCommon.SfpState, count int) error
+	GetPlatformState() (pluginCommon.PlatformState, error)
+	GetThermalState(thermalId int32) (pluginCommon.ThermalState, error)
+	GetMaxNumOfThermal() int
 }
 
 type ResourceManagers struct {
@@ -58,20 +66,34 @@ type PluginManager struct {
 	plugin PluginIntf
 }
 
-func NewPluginMgr(pluginName string, initParams *pluginCommon.PluginInitParams) *PluginManager {
+func NewPluginMgr(initParams *pluginCommon.PluginInitParams) (*PluginManager, error) {
 	var plugin PluginIntf
+	var err error
 	pluginMgr := new(PluginManager)
 	pluginMgr.ResourceManagers = new(ResourceManagers)
 	pluginMgr.logger = initParams.Logger
-	pluginName = strings.ToLower(pluginName)
+	pluginName := strings.ToLower(initParams.PluginName)
 	switch pluginName {
 	case pluginCommon.ONLP_PLUGIN:
 		fmt.Println("===== ONLP_PLUGIN =====")
-		plugin = onlp.NewONLPPlugin(initParams)
+		plugin, err = onlp.NewONLPPlugin(initParams)
+		if err != nil {
+			return nil, err
+		}
 		pluginMgr.plugin = plugin
 	case pluginCommon.OpenBMC_PLUGIN:
 		fmt.Println("===== OPENBMC_PLUGIN =====")
-		plugin = openBMC.NewOpenBMCPlugin(initParams)
+		plugin, err = openBMC.NewOpenBMCPlugin(initParams)
+		if err != nil {
+			return nil, err
+		}
+		pluginMgr.plugin = plugin
+	case pluginCommon.Dummy_PLUGIN:
+		fmt.Println("===== Dummy_PLUGIN =====")
+		plugin, err = dummy.NewDummyPlugin(initParams)
+		if err != nil {
+			return nil, err
+		}
 		pluginMgr.plugin = plugin
 	default:
 	}
@@ -81,7 +103,7 @@ func NewPluginMgr(pluginName string, initParams *pluginCommon.PluginInitParams) 
 	pluginMgr.SfpManager = &SfpMgr
 	pluginMgr.ThermalManager = &ThermalMgr
 	pluginMgr.LedManager = &LedMgr
-	return pluginMgr
+	return pluginMgr, nil
 }
 
 func (pMgr *PluginManager) Init() error {

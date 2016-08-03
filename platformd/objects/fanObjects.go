@@ -31,6 +31,7 @@ type FanState struct {
 	Status        string
 	Model         string
 	SerialNum     string
+	LedId         int32
 }
 
 type FanStateGetInfo struct {
@@ -41,9 +42,9 @@ type FanStateGetInfo struct {
 }
 
 type FanConfig struct {
-	FanId          int32
-	AdminSpeed     int32
-	AdminDirection string
+	FanId      int32
+	AdminSpeed int32
+	AdminState string
 }
 
 type FanConfigGetInfo struct {

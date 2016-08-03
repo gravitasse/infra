@@ -6,7 +6,7 @@ IPCS=sysd\
 	fMgrd\
 	platformd
 
-all: ipc exe 
+all: ipc exe
 
 exe: $(COMPS)
 	 $(foreach f,$^, make -C $(f) exe;)

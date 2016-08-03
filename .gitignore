@@ -22,6 +22,7 @@ _testmain.go
 *.exe
 *.test
 *.prof
+*.swp
 
 # Ignore auto generated thrift files
 fMgrd/rpc/fMgrd.thrift

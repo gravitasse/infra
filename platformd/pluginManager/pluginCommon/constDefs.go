@@ -31,10 +31,14 @@ import (
 const (
 	ONLP_PLUGIN    = "onlp"
 	OpenBMC_PLUGIN = "openbmc"
+	Dummy_PLUGIN   = "dummy"
 )
 
 type PluginInitParams struct {
-	Logger logging.LoggerIntf
+	Logger     logging.LoggerIntf
+	PluginName string
+	IpAddr     string
+	Port       string
 }
 
 type FanState struct {
@@ -45,5 +49,36 @@ type FanState struct {
 	Status        string
 	Model         string
 	SerialNum     string
+	LedId         int32
 	Valid         bool
+}
+
+type SfpState struct {
+	SfpId      int32
+	AdminState string
+	OperStatus string
+	SfpLOS     string
+	SfpType    string
+	EEPROM     [256]string
+}
+
+type PlatformState struct {
+	ObjName      string
+	ProductName  string
+	SerialNum    string
+	Manufacturer string
+	Vendor       string
+	Release      string
+	PlatformName string
+	Version      string
+}
+
+type ThermalState struct {
+	ThermalId                 int32
+	Location                  string
+	Temperature               string
+	LowerWatermarkTemperature string
+	UpperWatermarkTemperature string
+	ShutdownTemperature       string
+	Valid                     bool
 }

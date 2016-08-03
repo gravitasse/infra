@@ -28,7 +28,6 @@ import (
 	//"infra/platformd/objects"
 	"infra/platformd/pluginManager"
 	"infra/platformd/pluginManager/pluginCommon"
-	"time"
 	"utils/dbutils"
 	"utils/logging"
 )
@@ -52,7 +51,7 @@ type InitParams struct {
 	Logger      logging.LoggerIntf
 }
 
-func NewPlatformdServer(initParams *InitParams) *PlatformdServer {
+func NewPlatformdServer(initParams *InitParams) (*PlatformdServer, error) {
 	var svr PlatformdServer
 
 	svr.dmnName = initParams.DmnName
@@ -68,10 +67,16 @@ func NewPlatformdServer(initParams *InitParams) *PlatformdServer {
 		svr.Logger.Err("Failed to parse platformd config file, using default values for all attributes")
 	}
 	pluginInitParams := &pluginCommon.PluginInitParams{
-		Logger: svr.Logger,
+		Logger:     svr.Logger,
+		PluginName: CfgFileInfo.PluginName,
+		IpAddr:     CfgFileInfo.IpAddr,
+		Port:       CfgFileInfo.Port,
 	}
-	svr.pluginMgr = pluginManager.NewPluginMgr(CfgFileInfo.PluginName, pluginInitParams)
-	return &svr
+	svr.pluginMgr, err = pluginManager.NewPluginMgr(pluginInitParams)
+	if err != nil {
+		return nil, err
+	}
+	return &svr, err
 }
 
 func (svr *PlatformdServer) initServer() error {
@@ -119,6 +124,32 @@ func (svr *PlatformdServer) handleRPCRequest(req *ServerRequest) {
 			retObj.RetVal, retObj.Err = svr.updateFanConfig(val.FanOldCfg, val.FanNewCfg, val.AttrSet)
 		}
 		svr.ReplyChan <- interface{}(&retObj)
+	case GET_PLATFORM_STATE:
+		var retObj GetPlatformStateOutArgs
+		if val, ok := req.Data.(*GetPlatformStateInArgs); ok {
+			retObj.Obj, retObj.Err = svr.getPlatformState(val.ObjName)
+		}
+		svr.Logger.Info(fmt.Sprintln("Server GET_PLATFORM_STATE request replying -", retObj))
+		svr.ReplyChan <- interface{}(&retObj)
+	case GET_BULK_PLATFORM_STATE:
+		var retObj GetBulkPlatformStateOutArgs
+		if val, ok := req.Data.(*GetBulkInArgs); ok {
+			retObj.BulkInfo, retObj.Err = svr.getBulkPlatformState(val.FromIdx, val.Count)
+		}
+		svr.ReplyChan <- interface{}(&retObj)
+	case GET_THERMAL_STATE:
+		var retObj GetThermalStateOutArgs
+		if val, ok := req.Data.(*GetThermalStateInArgs); ok {
+			retObj.Obj, retObj.Err = svr.getThermalState(val.ThermalId)
+		}
+		svr.Logger.Info(fmt.Sprintln("Server GET_THERMAL_STATE request replying -", retObj))
+		svr.ReplyChan <- interface{}(&retObj)
+	case GET_BULK_THERMAL_STATE:
+		var retObj GetBulkThermalStateOutArgs
+		if val, ok := req.Data.(*GetBulkInArgs); ok {
+			retObj.BulkInfo, retObj.Err = svr.getBulkThermalState(val.FromIdx, val.Count)
+		}
+		svr.ReplyChan <- interface{}(&retObj)
 	default:
 		svr.Logger.Err(fmt.Sprintln("Error : Server recevied unrecognized request - ", req.Op))
 	}
@@ -139,6 +170,5 @@ func (svr *PlatformdServer) Serve() {
 			svr.handleRPCRequest(req)
 
 		}
-		time.Sleep(10)
 	}
 }

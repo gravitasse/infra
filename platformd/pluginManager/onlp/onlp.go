@@ -45,9 +45,9 @@ type onlpDriver struct {
 
 var driver onlpDriver
 
-func NewONLPPlugin(params *pluginCommon.PluginInitParams) *onlpDriver {
+func NewONLPPlugin(params *pluginCommon.PluginInitParams) (*onlpDriver, error) {
 	driver.logger = params.Logger
-	return &driver
+	return &driver, nil
 }
 
 func (driver *onlpDriver) Init() error {
@@ -61,6 +61,7 @@ func (driver *onlpDriver) Init() error {
 
 func (driver *onlpDriver) DeInit() error {
 	driver.logger.Info("DeInitializing onlp driver")
+	C.DeInit()
 	return nil
 }
 
@@ -106,12 +107,8 @@ func (driver *onlpDriver) GetFanState(fanId int32) (pluginCommon.FanState, error
 	return retObj, nil
 }
 
-func (driver *onlpDriver) GetFanConfig(fanId int32) (*objects.FanConfig, error) {
-	var retObj objects.FanConfig
-	retObj.FanId = fanId
-	retObj.AdminSpeed = 10000
-	retObj.AdminDirection = "B2F"
-	return &retObj, nil
+func (driver *onlpDriver) GetFanConfig(fanId int32) (retObj *objects.FanConfig, err error) {
+	return retObj, err
 }
 
 func (driver *onlpDriver) UpdateFanConfig(cfg *objects.FanConfig) (bool, error) {
@@ -170,4 +167,60 @@ func (driver *onlpDriver) GetAllFanState(states []pluginCommon.FanState, cnt int
 		states[idx].SerialNum = C.GoString(&fanInfo[idx].SerialNum[0])
 	}
 	return nil
+}
+
+//TODO
+func (driver *onlpDriver) GetSfpState(sfpId int32) (pluginCommon.SfpState, error) {
+	var retObj pluginCommon.SfpState
+
+	// TODO
+	retObj.SfpId = sfpId
+	return retObj, nil
+}
+
+func (driver *onlpDriver) GetSfpConfig(sfpId int32) (*objects.SfpConfig, error) {
+	var retObj objects.SfpConfig
+
+	// TODO
+	retObj.SfpId = sfpId
+	return &retObj, nil
+}
+
+func (driver *onlpDriver) UpdateSfpConfig(cfg *objects.SfpConfig) (bool, error) {
+	driver.logger.Info("Updating Onlp SFP Config")
+	return true, nil
+}
+
+func (driver *onlpDriver) GetAllSfpState(states []pluginCommon.SfpState, cnt int) error {
+	driver.logger.Info("GetAllSfpState")
+	return nil
+}
+
+func (driver *onlpDriver) GetPlatformState() (pluginCommon.PlatformState, error) {
+	var retObj pluginCommon.PlatformState
+	var sysInfo C.sys_info_t
+
+	rt := int(C.GetPlatformState(&sysInfo))
+
+	if rt < 0 {
+		return retObj, errors.New(fmt.Sprintln("Unable to fetch System info"))
+	}
+
+	retObj.ProductName = C.GoString(&sysInfo.product_name[0])
+	retObj.Vendor = C.GoString(&sysInfo.vendor[0])
+	retObj.SerialNum = C.GoString(&sysInfo.serial_number[0])
+	retObj.Manufacturer = C.GoString(&sysInfo.manufacturer[0])
+	retObj.Release = C.GoString(&sysInfo.label_revision[0])
+	retObj.PlatformName = C.GoString(&sysInfo.platform_name[0])
+	retObj.Version = C.GoString(&sysInfo.onie_version[0])
+
+	return retObj, nil
+}
+
+func (driver *onlpDriver) GetMaxNumOfThermal() int {
+	return 0
+}
+
+func (driver *onlpDriver) GetThermalState(thermalId int32) (tState pluginCommon.ThermalState, err error) {
+	return tState, err
 }

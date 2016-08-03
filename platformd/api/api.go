@@ -39,25 +39,35 @@ func InitApiLayer(server *server.PlatformdServer) {
 	svr.Logger.Info("Initializing API layer")
 }
 
-func GetPlatformSystemState(objName string) (*objects.PlatformSystemState, error) {
-	return &objects.PlatformSystemState{
-		ObjName:   objName,
-		SerialNum: "000011112222333",
-	}, nil
+func GetPlatformState(objName string) (*objects.PlatformState, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_PLATFORM_STATE,
+		Data: interface{}(&server.GetPlatformStateInArgs{
+			ObjName: objName,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetPlatformStateOutArgs); ok {
+		return retObj.Obj, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetPlatformState")
+	}
 }
 
-func GetBulkPlatformSystemState(fromIdx, count int) (*objects.PlatformSystemStateGetInfo, error) {
-	obj := objects.PlatformSystemState{
-		ObjName:   "PlatformSystem",
-		SerialNum: "000011112222333",
+func GetBulkPlatformState(fromIdx, count int) (*objects.PlatformStateGetInfo, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_BULK_PLATFORM_STATE,
+		Data: interface{}(&server.GetBulkInArgs{
+			FromIdx: fromIdx,
+			Count:   count,
+		}),
 	}
-	var retObj objects.PlatformSystemStateGetInfo
-
-	retObj.EndIdx = 0
-	retObj.Count = 1
-	retObj.More = false
-	retObj.List = append(retObj.List, &obj)
-	return &retObj, nil
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetBulkPlatformStateOutArgs); ok {
+		return retObj.BulkInfo, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetBulkPlatformState")
+	}
 }
 
 func GetFanState(fanId int32) (*objects.FanState, error) {
@@ -135,5 +145,64 @@ func GetBulkFanConfig(fromIdx, count int) (*objects.FanConfigGetInfo, error) {
 		return retObj.BulkInfo, retObj.Err
 	} else {
 		return nil, errors.New("Error: Invalid response received from server during GetBulkFanConfig")
+	}
+}
+
+func UpdateSfp(oldCfg *objects.SfpConfig, newCfg *objects.SfpConfig, attrset []bool) (bool, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.UPDATE_SFP_CONFIG,
+		Data: interface{}(&server.UpdateSfpConfigInArgs{
+			SfpOldCfg: oldCfg,
+			SfpNewCfg: newCfg,
+			AttrSet:   attrset,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.UpdateConfigOutArgs); ok {
+		return retObj.RetVal, retObj.Err
+	}
+	return false, errors.New("Error: Invalid response received from server during UpdateFan")
+}
+
+func GetSfpConfig(sfpId int32) (*objects.SfpConfig, error) {
+	var obj objects.SfpConfig
+
+	return &obj, nil
+}
+
+func GetBulkSfpConfig(fromIdx, count int) (*objects.SfpConfigGetInfo, error) {
+	var obj objects.SfpConfigGetInfo
+
+	return &obj, nil
+}
+
+func GetThermalState(thermalId int32) (*objects.ThermalState, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_THERMAL_STATE,
+		Data: interface{}(&server.GetThermalStateInArgs{
+			ThermalId: thermalId,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetThermalStateOutArgs); ok {
+		return retObj.Obj, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetThermalState")
+	}
+}
+
+func GetBulkThermalState(fromIdx, count int) (*objects.ThermalStateGetInfo, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_BULK_THERMAL_STATE,
+		Data: interface{}(&server.GetBulkInArgs{
+			FromIdx: fromIdx,
+			Count:   count,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetBulkThermalStateOutArgs); ok {
+		return retObj.BulkInfo, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetBulkThermalState")
 	}
 }

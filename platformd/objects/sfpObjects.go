@@ -23,20 +23,31 @@
 
 package objects
 
-type PlatformState struct {
-	ObjName      string
-	ProductName  string
-	SerialNum    string
-	Manufacturer string
-	Vendor       string
-	Release      string
-	PlatformName string
-	Version      string
+type SfpState struct {
+	SfpId      int32
+	OperSpeed  int32
+	SfpPresent string
+	SfpConfig  string
+	Model      string
+	SerialNum  string
 }
 
-type PlatformStateGetInfo struct {
+type SfpStateGetInfo struct {
 	EndIdx int
 	Count  int
 	More   bool
-	List   []*PlatformState
+	List   []*SfpState
+}
+
+type SfpConfig struct {
+	SfpId          int32
+	AdminSpeed     int32
+	AdminDirection string
+}
+
+type SfpConfigGetInfo struct {
+	EndIdx int
+	Count  int
+	More   bool
+	List   []*SfpConfig
 }

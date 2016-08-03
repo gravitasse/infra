@@ -23,20 +23,18 @@
 
 package objects
 
-type PlatformState struct {
-	ObjName      string
-	ProductName  string
-	SerialNum    string
-	Manufacturer string
-	Vendor       string
-	Release      string
-	PlatformName string
-	Version      string
+type ThermalState struct {
+	ThermalId                 int32
+	Location                  string
+	Temperature               string
+	LowerWatermarkTemperature string
+	UpperWatermarkTemperature string
+	ShutdownTemperature       string
 }
 
-type PlatformStateGetInfo struct {
+type ThermalStateGetInfo struct {
 	EndIdx int
 	Count  int
 	More   bool
-	List   []*PlatformState
+	List   []*ThermalState
 }
