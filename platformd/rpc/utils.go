@@ -86,3 +86,15 @@ func convertToRPCFmtThermalState(obj *objects.ThermalState) *platformd.ThermalSt
 		ShutdownTemperature:       obj.ShutdownTemperature,
 	}
 }
+
+func convertToRPCFmtSfpState(obj *objects.SfpState) *platformd.SfpState {
+	return &platformd.SfpState{
+		SfpId:      obj.SfpId,
+		SfpSpeed:   obj.SfpSpeed,
+		SfpLOS:     obj.SfpLos,
+		SfpPresent: obj.SfpPresent,
+		SfpType:    obj.SfpType,
+		SerialNum:  obj.SerialNum,
+		EEPROM:     obj.EEPROM,
+	}
+}

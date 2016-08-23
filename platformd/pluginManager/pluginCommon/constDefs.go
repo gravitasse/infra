@@ -55,11 +55,12 @@ type FanState struct {
 
 type SfpState struct {
 	SfpId      int32
-	AdminState string
-	OperStatus string
-	SfpLOS     string
+	SfpSpeed   string
+	SfpLos     string
+	SfpPresent string
 	SfpType    string
-	EEPROM     [256]string
+	SerialNum  string
+	EEPROM     string
 }
 
 type PlatformState struct {

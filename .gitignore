@@ -28,3 +28,4 @@ _testmain.go
 fMgrd/rpc/fMgrd.thrift
 platformd/rpc/platformd.thrift
 sysd/rpc/sysd.thrift
+notifierd/rpc/notifierd.thrift

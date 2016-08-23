@@ -28,6 +28,7 @@ import (
 	"errors"
 	"fmt"
 	"infra/sysd/sysdCommonDefs"
+	"io/ioutil"
 	"models/objects"
 	"os"
 	"os/exec"
@@ -40,6 +41,7 @@ const (
 	KA_TIMEOUT_COUNT_MIN = 0
 	KA_TIMEOUT_COUNT     = 5 // After 5 KA missed from a daemon, sysd will assume the daemon as non-responsive. Restart it.
 	WD_MAX_NUM_RESTARTS  = 5 // After 5 restarts, if this daemon is still not responsive then stop it.
+	KA_RECV_CH_SIZE      = 1024
 )
 
 const (
@@ -49,6 +51,19 @@ const (
 	REASON_DAEMON_STOPPED = "Stopped by user"
 	REASON_COMING_UP      = "Started by user"
 )
+
+type DaemonJson struct {
+	Name string `json:"Name"`
+}
+
+type DaemonEnableJson struct {
+	Name   string `json:"Name"`
+	Enable bool   `json:"Enable"`
+}
+
+type DaemonsEnableList struct {
+	DaemonsEnable []DaemonEnableJson `json:"Daemons"`
+}
 
 type DaemonInfo struct {
 	Enable        bool
@@ -71,78 +86,136 @@ func (daemonInfo *DaemonInfo) Initialize() error {
 	daemonInfo.NumRestarts = 0
 	daemonInfo.RestartTime = ""
 	daemonInfo.RestartReason = ""
-	daemonInfo.WatchDog = true
+	daemonInfo.WatchDog = false
 	return nil
 }
 
-func (server *SYSDServer) StartWDRoutine() error {
+func (server *SYSDServer) StartWDRoutine() {
 	server.DaemonMap = make(map[string]*DaemonInfo)
-	server.KaRecvCh = make(chan string, sysdCommonDefs.SYSD_TOTAL_KA_DAEMONS)
+	server.KaRecvCh = make(chan string, KA_RECV_CH_SIZE)
+	server.DaemonStateDBCh = make(chan string, KA_RECV_CH_SIZE)
 	server.DaemonConfigCh = make(chan DaemonConfig, sysdCommonDefs.SYSD_TOTAL_KA_DAEMONS)
-	server.UpdateInfoInDbCh = make(chan string, sysdCommonDefs.SYSD_TOTAL_KA_DAEMONS)
 	server.DaemonRestartCh = make(chan string, sysdCommonDefs.SYSD_TOTAL_KA_DAEMONS)
-	go server.WDTimer()
+	server.PopulateDaemonList()
+	go server.KeepAliveReceiver()
+	go server.DaemonStateDBWriter()
 	for {
 		select {
-		case kaDaemon := <-server.KaRecvCh:
-			daemonInfo, exist := server.DaemonMap[kaDaemon]
-			if !exist {
-				daemonInfo = &DaemonInfo{}
-				daemonInfo.Initialize()
-				server.DaemonMap[kaDaemon] = daemonInfo
-			}
-			daemonInfo.RecvedKACount++
-			if daemonInfo.State != sysdCommonDefs.UP {
-				daemonInfo.State = sysdCommonDefs.UP
-				daemonInfo.Reason = REASON_NONE
-				server.PublishDaemonKANotification(kaDaemon, daemonInfo.State)
-			}
-			server.UpdateDaemonStateInDb(kaDaemon)
 		case daemonConfig := <-server.DaemonConfigCh:
-			server.logger.Info(fmt.Sprintln("Received daemon config for: ", daemonConfig.Name, " Enable ", daemonConfig.Enable))
+			server.logger.Info("Received daemon config for:", daemonConfig.Name, "Enable ", daemonConfig.Enable)
 			daemon := daemonConfig.Name
 			enable := daemonConfig.Enable
 			watchDog := daemonConfig.WatchDog
 			daemonInfo, exist := server.DaemonMap[daemon]
 			daemonUpdated := false
-			daemonInfo.WatchDog = watchDog
-			if enable {
-				if !exist {
-					daemonInfo = &DaemonInfo{}
-					daemonInfo.Initialize()
-					server.DaemonMap[daemon] = daemonInfo
-				}
-				if daemonInfo.State == sysdCommonDefs.STOPPED {
-					go server.ToggleFlexswitchDaemon(daemon, true)
-					daemonInfo.State = sysdCommonDefs.STARTING
-					daemonInfo.Reason = REASON_COMING_UP
-				}
-				daemonInfo.Enable = true
-				daemonUpdated = true
-			} else {
-				if exist {
-					if daemonInfo.State != sysdCommonDefs.STOPPED {
-						go server.ToggleFlexswitchDaemon(daemon, false)
+			if exist {
+				if enable {
+					if daemonInfo.State == sysdCommonDefs.STOPPED {
+						server.ToggleFlexswitchDaemon(daemon, true)
+						daemonInfo.State = sysdCommonDefs.STARTING
+						daemonInfo.Reason = REASON_COMING_UP
+						daemonInfo.Enable = true
+						daemonUpdated = true
+					} else {
+						server.logger.Info("Daemon", daemonConfig.Name, "is not in stopped state, ignoring enable command")
+					}
+				} else {
+					if daemonInfo.State == sysdCommonDefs.UP {
+						server.ToggleFlexswitchDaemon(daemon, false)
 						daemonInfo.State = sysdCommonDefs.STOPPED
 						daemonInfo.Reason = REASON_DAEMON_STOPPED
+						daemonInfo.RecvedKACount = 0
 						server.PublishDaemonKANotification(daemon, daemonInfo.State)
+						daemonInfo.Enable = false
+						daemonUpdated = true
+					} else {
+						server.logger.Info("Daemon", daemonConfig.Name, "is not in up state, ignoring disable command")
 					}
-					daemonInfo.Enable = false
-					daemonUpdated = true
-				} else {
-					server.logger.Info(fmt.Sprintln("Received call to stop unknown daemon ", daemon))
 				}
-			}
-			if daemonUpdated {
-				server.UpdateDaemonStateInDb(daemon)
+				if daemonInfo != nil {
+					daemonInfo.WatchDog = watchDog
+				}
+				if daemonUpdated {
+					server.DaemonStateDBCh <- daemon
+				}
+			} else {
+				server.logger.Info("Unknown daemon:", daemonConfig.Name)
 			}
 		case daemon := <-server.DaemonRestartCh:
-			if server.DaemonMap[daemon].State != sysdCommonDefs.STOPPED {
+			daemonInfo, exist := server.DaemonMap[daemon]
+			if exist && daemonInfo.State == sysdCommonDefs.UP {
+				daemonInfo.State = sysdCommonDefs.RESTARTING
+				daemonInfo.NumRestarts++
+				daemonInfo.RestartTime = time.Now().String()
+				daemonInfo.RestartReason = REASON_KA_FAIL
 				go server.RestartFlexswitchDaemon(daemon)
+				server.DaemonStateDBCh <- daemon
 			}
-		case daemon := <-server.UpdateInfoInDbCh:
-			server.UpdateDaemonStateInDb(daemon)
 		}
+	}
+}
+
+/*
+ * Read clients.json and populate DaemonMap. Keep the Daemon's watchdog as false so that sysd won't
+ * try to restart it until first keepalive is received.
+ * Also, read systemProfile.json and disable (as stopped) the daemons that have Enabled == false.
+ */
+func (server *SYSDServer) PopulateDaemonList() error {
+	var daemonsList []DaemonJson
+	var daemonsEnableList DaemonsEnableList
+	var daemonName string
+
+	daemonsFile := server.paramsDir + "clients.json"
+	bytes, err := ioutil.ReadFile(daemonsFile)
+	if err != nil {
+		server.logger.Info("Failed to read daemons list file")
+		return err
+	}
+	err = json.Unmarshal(bytes, &daemonsList)
+	if err != nil {
+		server.logger.Info("Failed to unmarshal daemons list json")
+		return err
+	}
+	for _, daemon := range daemonsList {
+		if daemon.Name == "sysd" {
+			continue
+		}
+		if daemon.Name == "local" {
+			daemonName = "confd"
+		} else {
+			daemonName = daemon.Name
+		}
+		daemonInfo := &DaemonInfo{}
+		daemonInfo.Initialize()
+		server.DaemonMap[daemonName] = daemonInfo
+		server.logger.Info("Added daemon", daemonName)
+	}
+
+	daemonsEnableFile := server.paramsDir + "systemProfile.json"
+	bytes, err = ioutil.ReadFile(daemonsEnableFile)
+	if err != nil {
+		server.logger.Info("Failed to read daemons enablefile")
+		return err
+	}
+	err = json.Unmarshal(bytes, &daemonsEnableList)
+	if err != nil {
+		server.logger.Info("Failed to unmarshal daemons enable list json")
+		return err
+	}
+	for _, daemon := range daemonsEnableList.DaemonsEnable {
+		daemonInfo, exist := server.DaemonMap[daemon.Name]
+		if exist {
+			if daemon.Enable == false {
+				daemonInfo.Enable = false
+				daemonInfo.State = sysdCommonDefs.STOPPED
+				daemonInfo.Reason = REASON_DAEMON_STOPPED
+				server.logger.Info("Daemon", daemon.Name, "is stopped")
+			}
+		}
+	}
+	// Write all daemons' information into DB
+	for daemonName, _ = range server.DaemonMap {
+		server.UpdateDaemonStateInDb(daemonName)
 	}
 	return nil
 }
@@ -186,46 +259,67 @@ func (server *SYSDServer) ToggleFlexswitchDaemon(daemon string, up bool) error {
 	//cmdArgs := []string{"-n", daemon, "-o", op, "-d", cmdDir}
 	cmdArgs := []string{"-n", daemon, "-o", op}
 	if cmdOut, err = exec.Command(cmdName, cmdArgs...).Output(); err != nil {
-		server.logger.Info(fmt.Sprintln(os.Stderr, "There was an error to ", op, " flexswitch daemon ", daemon, " : ", err))
+		server.logger.Info(os.Stderr, "There was an error to", op, "flexswitch daemon", daemon, " : ", err)
 		return err
 	}
 	out := string(cmdOut)
-	server.logger.Info(fmt.Sprintln("Flexswitch daemon ", daemon, op, " returned ", out))
+	server.logger.Info("Flexswitch daemon", daemon, op, "returned", out)
 
 	return nil
 }
 
-func (server *SYSDServer) RestartFlexswitchDaemon(daemon string) error {
+func (server *SYSDServer) RestartFlexswitchDaemon(daemon string) {
 	server.PublishDaemonKANotification(daemon, sysdCommonDefs.RESTARTING)
 	server.ToggleFlexswitchDaemon(daemon, false)
 	server.ToggleFlexswitchDaemon(daemon, true)
-	return nil
 }
 
-func (server *SYSDServer) WDTimer() error {
-	server.logger.Info("Starting system WD")
-	wdTimer := time.NewTicker(time.Second * KA_TIMEOUT_COUNT)
-	for t := range wdTimer.C {
-		_ = t
-		for daemon, daemonInfo := range server.DaemonMap {
-			if daemonInfo.State == sysdCommonDefs.UP {
-				if daemonInfo.RecvedKACount < KA_TIMEOUT_COUNT && daemonInfo.RecvedKACount > KA_TIMEOUT_COUNT_MIN {
-					server.logger.Info(fmt.Sprintln("Daemon ", daemon, " is slowing down. Monitoring it."))
-				}
-				if daemonInfo.WatchDog && daemonInfo.RecvedKACount == KA_TIMEOUT_COUNT_MIN {
-					server.logger.Info(fmt.Sprintln("Daemon ", daemon, " is not responsive. Restarting it."))
-					server.DaemonRestartCh <- daemon
-					daemonInfo.State = sysdCommonDefs.RESTARTING
-					daemonInfo.NumRestarts++
-					daemonInfo.RestartTime = time.Now().String()
-					daemonInfo.RestartReason = REASON_KA_FAIL
-					server.UpdateInfoInDbCh <- daemon
-				}
-			}
-			daemonInfo.RecvedKACount = 0
+func (server *SYSDServer) DaemonStateDBWriter() {
+	for {
+		select {
+		case daemon := <-server.DaemonStateDBCh:
+			server.UpdateDaemonStateInDb(daemon)
 		}
 	}
-	return nil
+}
+
+func (server *SYSDServer) KeepAliveReceiver() {
+	wdTimerCh := time.NewTicker(time.Second * KA_TIMEOUT_COUNT).C
+	for {
+		select {
+		case kaDaemon := <-server.KaRecvCh:
+			daemonInfo, exist := server.DaemonMap[kaDaemon]
+			if exist {
+				if daemonInfo.Enable {
+					if daemonInfo.WatchDog == false {
+						daemonInfo.WatchDog = true
+					}
+					daemonInfo.RecvedKACount++
+					if daemonInfo.State != sysdCommonDefs.UP {
+						daemonInfo.State = sysdCommonDefs.UP
+						daemonInfo.Reason = REASON_NONE
+						server.PublishDaemonKANotification(kaDaemon, daemonInfo.State)
+					}
+					server.DaemonStateDBCh <- kaDaemon
+				}
+			} else {
+				server.logger.Info("Received keepalive from unknown daemon", kaDaemon)
+			}
+		case <-wdTimerCh:
+			for daemon, daemonInfo := range server.DaemonMap {
+				if daemonInfo.WatchDog && daemonInfo.State == sysdCommonDefs.UP {
+					if daemonInfo.RecvedKACount < KA_TIMEOUT_COUNT && daemonInfo.RecvedKACount > KA_TIMEOUT_COUNT_MIN {
+						server.logger.Info("Daemon", daemon, "is slowing down. Monitoring it.")
+					}
+					if daemonInfo.RecvedKACount <= KA_TIMEOUT_COUNT_MIN {
+						server.logger.Info("Daemon", daemon, "is not responsive. Restarting it.")
+						server.DaemonRestartCh <- daemon
+					}
+				}
+				daemonInfo.RecvedKACount = 0
+			}
+		}
+	}
 }
 
 func (server *SYSDServer) ConvertDaemonStateToThrift(ent DaemonState) *sysd.DaemonState {
@@ -279,7 +373,7 @@ func (server *SYSDServer) GetDaemonState(name string) *DaemonState {
 func (server *SYSDServer) GetBulkDaemonStates(idx int, cnt int) (int, int, []DaemonState) {
 	var nextIdx int
 	var count int
-	server.logger.Info(fmt.Sprintln("GetBulk DaemonStates"))
+	server.logger.Info("GetBulk DaemonStates")
 	result := make([]DaemonState, cnt)
 	i := 0
 	for daemon, daemonInfo := range server.DaemonMap {

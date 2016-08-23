@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"infra/platformd/objects"
 	"infra/platformd/pluginManager/pluginCommon"
+	"strconv"
 	"utils/logging"
 )
 
@@ -169,19 +170,55 @@ func (driver *onlpDriver) GetAllFanState(states []pluginCommon.FanState, cnt int
 	return nil
 }
 
-//TODO
+func (driver *onlpDriver) GetSfpCnt() int {
+	return int(C.GetSfpCnt())
+}
+
 func (driver *onlpDriver) GetSfpState(sfpId int32) (pluginCommon.SfpState, error) {
 	var retObj pluginCommon.SfpState
+	var sfpInfo C.sfp_info_t
+	var rt int
 
-	// TODO
-	retObj.SfpId = sfpId
+	rt = int(C.GetSfpState(&sfpInfo, C.int(sfpId)))
+	if rt < 0 {
+		return retObj, errors.New(fmt.Sprintln("Unable to fetch SFP info for ", sfpId))
+	}
+
+	if int(rt) > 0 {
+		retObj.SfpId = sfpId
+		retObj.SfpPresent = "SfpNotPresent"
+		return retObj, nil
+	}
+
+	retObj.SfpPresent = "SfpPresent"
+	if int(sfpInfo.sfp_los) > 0 {
+		retObj.SfpLos = "LaserUp"
+	} else {
+		retObj.SfpLos = "LaserDown"
+	}
+
+	retObj.SerialNum = C.GoString(&sfpInfo.serial_number[0])
+	q := strconv.Quote(C.GoStringN(&sfpInfo.eeprom[0], 256))
+	retObj.EEPROM = q
+
 	return retObj, nil
+}
+
+func (driver *onlpDriver) GetAllSfpState(states []pluginCommon.SfpState, cnt int) error {
+
+	if cnt > driver.GetSfpCnt() {
+		return errors.New("Error GetAllSfpState Invalid Count")
+	}
+
+	for idx := 0; idx < cnt; idx++ {
+		states[idx], _ = driver.GetSfpState(int32(idx))
+	}
+	return nil
 }
 
 func (driver *onlpDriver) GetSfpConfig(sfpId int32) (*objects.SfpConfig, error) {
 	var retObj objects.SfpConfig
 
-	// TODO
 	retObj.SfpId = sfpId
 	return &retObj, nil
 }
@@ -189,11 +226,6 @@ func (driver *onlpDriver) GetSfpConfig(sfpId int32) (*objects.SfpConfig, error) 
 func (driver *onlpDriver) UpdateSfpConfig(cfg *objects.SfpConfig) (bool, error) {
 	driver.logger.Info("Updating Onlp SFP Config")
 	return true, nil
-}
-
-func (driver *onlpDriver) GetAllSfpState(states []pluginCommon.SfpState, cnt int) error {
-	driver.logger.Info("GetAllSfpState")
-	return nil
 }
 
 func (driver *onlpDriver) GetPlatformState() (pluginCommon.PlatformState, error) {

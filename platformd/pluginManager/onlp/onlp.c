@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include "onlp.h"
-#include <onlp/fan.h>
 #include <onlp/sys.h>
+#include <onlp/fan.h>
+#include <onlp/sfp.h>
 #include <dlfcn.h>
 
 static onlp_oid_t fan_oid_table[ONLP_OID_TABLE_SIZE];
@@ -13,6 +14,15 @@ void *handle;
 int (*onlpInit)(void);
 int (*onlpSysInfoGet)(onlp_sys_info_t*);
 int (*onlpFanInfoGet)(onlp_oid_t, onlp_fan_info_t*);
+
+/* SFP API */
+void (*onlpSfpBitmapInit)(onlp_sfp_bitmap_t*);
+int (*onlpSfpBitmapGet)(onlp_sfp_bitmap_t*);
+int (*onlpSfpIsPresent)(int);
+int (*onlpSfpPresenceBitmapGet)(onlp_sfp_bitmap_t*);
+int (*onlpSfpRxLosBitmapGet)(onlp_sfp_bitmap_t*);
+int (*onlpSfpControlGet)(int, onlp_sfp_control_t, int*);
+int (*onlpSfpEepromRead)(int, uint8_t**);
 
 int
 loadOnlpSym()
@@ -38,6 +48,50 @@ loadOnlpSym()
 	}
 
     onlpSysInfoGet = dlsym(handle, "onlp_sys_info_get");
+    if ((error = dlerror()) != NULL)  {
+        printf(error, stderr);
+		return -1;
+    }
+
+#if 0
+    onlpSfpBitmapInit = dlsym(handle, "onlp_sfp_bitmap_init");
+    if ((error = dlerror()) != NULL)  {
+        printf(error, stderr);
+		return -1;
+    }
+#endif
+
+    onlpSfpBitmapGet = dlsym(handle, "onlp_sfp_bitmap_get");
+    if ((error = dlerror()) != NULL)  {
+        printf(error, stderr);
+		return -1;
+    }
+
+    onlpSfpIsPresent = dlsym(handle, "onlp_sfp_is_present");
+    if ((error = dlerror()) != NULL)  {
+        printf(error, stderr);
+		return -1;
+    }
+
+    onlpSfpPresenceBitmapGet = dlsym(handle, "onlp_sfp_presence_bitmap_get");
+    if ((error = dlerror()) != NULL)  {
+        printf(error, stderr);
+		return -1;
+    }
+
+    onlpSfpRxLosBitmapGet = dlsym(handle, "onlp_sfp_rx_los_bitmap_get");
+    if ((error = dlerror()) != NULL)  {
+        printf(error, stderr);
+		return -1;
+    }
+
+    onlpSfpEepromRead = dlsym(handle, "onlp_sfp_eeprom_read");
+    if ((error = dlerror()) != NULL)  {
+        printf(error, stderr);
+		return -1;
+    }
+
+    onlpSfpControlGet = dlsym(handle, "onlp_sfp_control_get");
     if ((error = dlerror()) != NULL)  {
         printf(error, stderr);
 		return -1;
@@ -209,6 +263,59 @@ GetPlatformState(sys_info_t *info_p)
     return ret;
 }
 
-int DeInit() {
+int
+GetSfpCnt()
+{
+    int rt;
+    onlp_sfp_bitmap_t bMap;
+
+    return 32;
+    // TODO
+    memset(&bMap, 0, sizeof(onlp_sfp_bitmap_t));
+    if (onlpSfpBitmapGet == NULL) {
+		printf("onlpSfpBitmapGet NULL\n");
+		return 0;
+	}
+    rt = (*onlpSfpBitmapGet)(&bMap);
+    if (rt < 0)
+        return 0;
+
+    return AIM_BITMAP_COUNT(&bMap);
+}
+
+SFP_RET
+GetSfpState(sfp_info_t *sfpInfo, int sfpId)
+{
+    int rt, rval;
+    unsigned char *eeprom_p = NULL;
+
+    rt = (*onlpSfpIsPresent)(sfpId);
+    if (rt < 0) {
+		printf("%s :(%d) INVALID SFP(%d) \n",__FUNCTION__, rt, sfpId);
+		return SFP_ERROR;
+    }
+
+    memset(sfpInfo, 0, sizeof(sfp_info_t));
+    if (!rt)
+        return SFP_MISSING;
+
+    sfpInfo->sfp_id = sfpId;
+    sfpInfo->sfp_present = 1;
+
+    /* RX LOS */
+    (*onlpSfpControlGet)(sfpId, ONLP_SFP_CONTROL_RX_LOS, &rval);
+    sfpInfo->sfp_los = rval?1:0;
+
+    rt = (*onlpSfpEepromRead)(sfpId, &eeprom_p);
+    if (rt < 0) {
+		printf("%s :(%d) Eeprom read failed for SFP(%d)\n",__FUNCTION__, rt, sfpId);
+		return SFP_ERROR;
+    }
+    memcpy(sfpInfo->eeprom, eeprom_p, 256);
+    return SFP_OK;
+}
+
+int
+DeInit() {
 	dlclose(handle);
 }

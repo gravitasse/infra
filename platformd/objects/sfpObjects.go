@@ -25,11 +25,12 @@ package objects
 
 type SfpState struct {
 	SfpId      int32
-	OperSpeed  int32
+	SfpSpeed   string
+	SfpLos     string
 	SfpPresent string
-	SfpConfig  string
-	Model      string
+	SfpType    string
 	SerialNum  string
+	EEPROM     string
 }
 
 type SfpStateGetInfo struct {

@@ -24,103 +24,30 @@
 package server
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/garyburd/redigo/redis"
-	"io/ioutil"
-	"models/events"
+	"infra/fMgrd/faultMgr"
 	"time"
 	"utils/logging"
-	"utils/ringBuffer"
 )
-
-type FaultDetail struct {
-	RaiseFault       bool
-	ClearingEventId  int
-	ClearingDaemonId int
-}
-
-type EventStruct struct {
-	EventId     int
-	EventName   string
-	Description string
-	SrcObjName  string
-	EventEnable bool
-	IsFault     bool
-	Fault       FaultDetail
-}
-
-type DaemonEvent struct {
-	DaemonId          int
-	DaemonName        string
-	DaemonEventEnable bool
-	EventList         []EventStruct
-}
-
-type EventJson struct {
-	DaemonEvents []DaemonEvent
-}
-
-const (
-	EventDir string = "/etc/flexswitch/"
-)
-
-type FaultId struct {
-	DaemonId int
-	EventId  int
-}
-
-type NonFaultData struct {
-	IsClearingEvent bool
-	FaultEventId    int
-	FaultOwnerId    int
-}
-
-type EvtDetail struct {
-	IsClearingEvent  bool
-	IsFault          bool
-	RaiseFault       bool
-	ClearingEventId  int
-	ClearingDaemonId int
-}
-
-type FaultDataMap map[FaultObjKey]FaultData
-
-type FaultDatabaseKey struct {
-	FaultId        FaultId
-	FObjKey        FaultObjKey
-	Resolved       bool
-	FaultSeqNumber uint64
-	OwnerName      string
-	EventName      string
-	OccuranceTime  time.Time
-	ResolutionTime time.Time
-	Description    string
-}
 
 type FMGRServer struct {
-	logger           *logging.Writer
-	dbHdl            redis.Conn
-	subHdl           redis.PubSubConn
-	FaultEventMap    map[FaultId]FaultDetail
-	NonFaultEventMap map[FaultId]NonFaultData
-	FaultDatabase    map[FaultId]FaultDataMap
-	FaultList        *ringBuffer.RingBuffer
-	FaultSeqNumber   uint64
-	InitDone         chan bool
+	Logger    logging.LoggerIntf
+	dbHdl     redis.Conn
+	subHdl    redis.PubSubConn
+	fMgr      *faultMgr.FaultManager
+	InitDone  chan bool
+	ReqChan   chan *ServerRequest
+	ReplyChan chan interface{}
 }
 
 func NewFMGRServer(logger *logging.Writer) *FMGRServer {
 	fMgrServer := &FMGRServer{}
-	fMgrServer.logger = logger
+	fMgrServer.Logger = logger
 	fMgrServer.InitDone = make(chan bool)
-	fMgrServer.FaultEventMap = make(map[FaultId]FaultDetail)
-	fMgrServer.NonFaultEventMap = make(map[FaultId]NonFaultData)
-	fMgrServer.FaultDatabase = make(map[FaultId]FaultDataMap)
-	fMgrServer.FaultList = new(ringBuffer.RingBuffer)
-	fMgrServer.FaultList.SetRingBufferCapacity(100000) //Max 100000 entries in fault database
-	fMgrServer.FaultSeqNumber = 0
+	fMgrServer.ReqChan = make(chan *ServerRequest)
+	fMgrServer.ReplyChan = make(chan interface{})
 	return fMgrServer
 }
 
@@ -132,7 +59,7 @@ func (server *FMGRServer) dial() (redis.Conn, error) {
 		dbHdl, err := redis.Dial("tcp", ":6379")
 		if err != nil {
 			if retryCount%100 == 0 {
-				server.logger.Err(fmt.Sprintln("Failed to dail out to Redis server. Retrying connection. Num of retries = ", retryCount))
+				server.Logger.Err(fmt.Sprintln("Failed to dail out to Redis server. Retrying connection. Num of retries = ", retryCount))
 			}
 		} else {
 			return dbHdl, nil
@@ -146,166 +73,99 @@ func (server *FMGRServer) Subscriber() {
 	for {
 		switch n := server.subHdl.Receive().(type) {
 		case redis.Message:
-			var evt events.Event
-			err := json.Unmarshal(n.Data, &evt)
-			if err != nil {
-				server.logger.Err(fmt.Sprintln("Unable to Unmarshal the byte stream", err))
-				continue
-			}
-			//server.logger.Info(fmt.Sprintln("OwnerId:", evt.OwnerId))
-			//server.logger.Info(fmt.Sprintln("OwnerName:", evt.OwnerName))
-			//server.logger.Info(fmt.Sprintln("EvtId:", evt.EvtId))
-			//server.logger.Info(fmt.Sprintln("EventName:", evt.EventName))
-			//server.logger.Info(fmt.Sprintln("Timestamp:", evt.TimeStamp))
-			//server.logger.Info(fmt.Sprintln("Description:", evt.Description))
-			//server.logger.Info(fmt.Sprintln("SrcObjName:", evt.SrcObjName))
-			keyMap, exist := events.EventKeyMap[evt.OwnerName]
-			if !exist {
-				server.logger.Info("Key map not found given Event")
-				continue
-			}
-			obj, exist := keyMap[evt.SrcObjName]
-			if !exist {
-				server.logger.Info("Src Object Name not found in Event Key Map")
-				continue
-			}
-			obj = evt.SrcObjKey
-			server.logger.Debug(fmt.Sprintln("Src Obj Key", obj))
-
-			server.processEvents(evt)
-
+			server.fMgr.EventCh <- n.Data
 		case redis.Subscription:
 			if n.Count == 0 {
-				return
+				server.Logger.Err("Empty data Received")
 			}
 		case error:
-			server.logger.Err(fmt.Sprintf("error: %v\n", n))
-			return
+			server.Logger.Err(fmt.Sprintf("error: %v\n", n))
 		}
 	}
 	server.subHdl.Unsubscribe()
-	server.subHdl.PUnsubscribe()
+	//server.subHdl.PUnsubscribe()
 }
 
-func (server *FMGRServer) initFaultMgrDS() error {
-	var evtJson EventJson
-	evtMap := make(map[FaultId]EvtDetail)
-	eventsFile := EventDir + "events.json"
-	bytes, err := ioutil.ReadFile(eventsFile)
-	if err != nil {
-		server.logger.Err(fmt.Sprintln("Error in reading ", eventsFile, " file."))
-		err := errors.New(fmt.Sprintln("Error in reading ", eventsFile, " file."))
-		return err
-	}
-
-	err = json.Unmarshal(bytes, &evtJson)
-	if err != nil {
-		server.logger.Err(fmt.Sprintln("Errors in unmarshalling json file : ", eventsFile))
-		err := errors.New(fmt.Sprintln("Errors in unmarshalling json file: ", eventsFile))
-		return err
-	}
-
-	server.logger.Info(fmt.Sprintln("evtJson:", evtJson))
-	for _, daemon := range evtJson.DaemonEvents {
-		server.logger.Info(fmt.Sprintln("daemon.DaemonName:", daemon.DaemonName))
-		for _, evt := range daemon.EventList {
-			fId := FaultId{
-				DaemonId: int(daemon.DaemonId),
-				EventId:  int(evt.EventId),
-			}
-			evtEnt, exist := evtMap[fId]
-			if exist {
-				server.logger.Err(fmt.Sprintln("Duplicate entry found"))
-				continue
-			}
-			if evt.IsFault == true {
-				evtEnt.IsFault = true
-				evtEnt.IsClearingEvent = false
-				evtEnt.RaiseFault = evt.Fault.RaiseFault
-				evtEnt.ClearingEventId = evt.Fault.ClearingEventId
-				evtEnt.ClearingDaemonId = evt.Fault.ClearingDaemonId
-			} else {
-				evtEnt.IsFault = false
-				evtEnt.IsClearingEvent = false
-				evtEnt.RaiseFault = false
-				evtEnt.ClearingEventId = -1
-				evtEnt.ClearingDaemonId = -1
-			}
-			evtMap[fId] = evtEnt
+func (server *FMGRServer) InitSubscriber() error {
+	var errMsg string
+	for _, daemon := range server.fMgr.DaemonList {
+		err := server.subHdl.Subscribe(daemon)
+		if err != nil {
+			errMsg = fmt.Sprintf("%s : %s", errMsg, err)
 		}
 	}
 
-	for fId, evt := range evtMap {
-		if evt.IsFault == true {
-			cFId := FaultId{
-				DaemonId: evt.ClearingDaemonId,
-				EventId:  evt.ClearingEventId,
-			}
-			cEvt, exist := evtMap[cFId]
-			if !exist {
-				server.logger.Err(fmt.Sprintln("No clearing event found for fault:", fId))
-				continue
-			}
-
-			cEvt.IsClearingEvent = true
-			evtMap[cFId] = cEvt
-		}
+	if errMsg == "" {
+		return nil
 	}
 
-	for fId, evt := range evtMap {
-		if evt.IsFault == true {
-			evtEnt, _ := server.FaultEventMap[fId]
-			evtEnt.RaiseFault = evt.RaiseFault
-			evtEnt.ClearingEventId = evt.ClearingEventId
-			evtEnt.ClearingDaemonId = evt.ClearingDaemonId
-			server.FaultEventMap[fId] = evtEnt
-			cFId := FaultId{
-				DaemonId: evtEnt.ClearingDaemonId,
-				EventId:  evtEnt.ClearingEventId,
-			}
-			cEvtEnt, _ := server.NonFaultEventMap[cFId]
-			cEvtEnt.FaultOwnerId = fId.DaemonId
-			cEvtEnt.FaultEventId = fId.EventId
-			server.NonFaultEventMap[cFId] = cEvtEnt
-		} else {
-			evtEnt, _ := server.NonFaultEventMap[fId]
-			evtEnt.IsClearingEvent = evt.IsClearingEvent
-			server.NonFaultEventMap[fId] = evtEnt
-		}
-	}
-	return nil
+	return errors.New(fmt.Sprintln("Error Initializing Subscriber:", errMsg))
 }
 
-func (server *FMGRServer) InitServer(paramDir string) {
-	var err error
-
-	err = server.initFaultMgrDS()
+func (server *FMGRServer) InitServer() error {
+	server.fMgr = faultMgr.NewFaultManager(server.Logger)
+	err := server.fMgr.InitFaultManager()
 	if err != nil {
-		server.logger.Err(fmt.Sprintln(err))
-		return
+		server.Logger.Err(fmt.Sprintln(err))
+		return err
 	}
-
-	server.logger.Info(fmt.Sprintln("Non Fault Event:", server.NonFaultEventMap))
-	server.logger.Info(fmt.Sprintln("Fault Event:", server.FaultEventMap))
-
 	server.dbHdl, err = server.dial()
 	if err != nil {
-		server.logger.Err(fmt.Sprintln(err))
-		return
+		server.Logger.Err(fmt.Sprintln(err))
+		return err
 	}
 	//defer server.dbHdl.Close()
 	server.subHdl = redis.PubSubConn{Conn: server.dbHdl}
 
-	server.subHdl.Subscribe("ASICD")
-	server.subHdl.Subscribe("ARPD")
+	err = server.InitSubscriber()
+	if err != nil {
+		server.Logger.Err(fmt.Sprintln("Error in Initializing Subscriber", err))
+		return err
+	}
 	go server.Subscriber()
-
+	return err
 }
 
-func (server *FMGRServer) StartServer(paramDir string) {
-	server.InitServer(paramDir)
+func (server *FMGRServer) handleRPCRequest(req *ServerRequest) {
+	server.Logger.Debug(fmt.Sprintln("Calling handle RPC Request for:", *req))
+	switch req.Op {
+	case GET_BULK_FAULT_STATE:
+		var retObj GetBulkFaultStateOutArgs
+		if val, ok := req.Data.(*GetBulkInArgs); ok {
+			retObj.BulkInfo, retObj.Err = server.getBulkFaultState(val.FromIdx, val.Count)
+		}
+		server.ReplyChan <- interface{}(&retObj)
+	case GET_BULK_ALARM_STATE:
+		var retObj GetBulkAlarmStateOutArgs
+		if val, ok := req.Data.(*GetBulkInArgs); ok {
+			retObj.BulkInfo, retObj.Err = server.getBulkAlarmState(val.FromIdx, val.Count)
+		}
+		server.ReplyChan <- interface{}(&retObj)
+	case FAULT_ENABLE_ACTION:
+		var retObj FaultEnableActionOutArgs
+		if val, ok := req.Data.(*FaultEnableActionInArgs); ok {
+			retObj.RetVal, retObj.Err = server.faultEnableAction(val.Config)
+		}
+		server.ReplyChan <- interface{}(&retObj)
+	case FAULT_CLEAR_ACTION:
+		var retObj FaultClearActionOutArgs
+		if val, ok := req.Data.(*FaultClearActionInArgs); ok {
+			retObj.RetVal, retObj.Err = server.faultClearAction(val.Config)
+		}
+		server.ReplyChan <- interface{}(&retObj)
+	default:
+		server.Logger.Err(fmt.Sprintln("Error: Server received unrecognized request - ", req.Op))
+	}
+}
+
+func (server *FMGRServer) StartServer() {
+	server.InitServer()
 	server.InitDone <- true
 	for {
-		time.Sleep(10 * time.Second)
+		select {
+		case req := <-server.ReqChan:
+			server.Logger.Info(fmt.Sprintln("Server request received - ", *req))
+			server.handleRPCRequest(req)
+		}
 	}
 }

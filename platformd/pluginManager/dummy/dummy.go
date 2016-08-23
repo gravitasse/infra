@@ -93,6 +93,11 @@ func (driver *dummyDriver) GetAllSfpState(states []pluginCommon.SfpState, cnt in
 	return nil
 }
 
+func (driver *dummyDriver) GetSfpCnt() int {
+	driver.logger.Info("GetSfpCnt")
+	return 0
+}
+
 func (driver *dummyDriver) GetPlatformState() (pluginCommon.PlatformState, error) {
 	var retObj pluginCommon.PlatformState
 

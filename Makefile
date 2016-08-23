@@ -1,10 +1,12 @@
 COMPS=sysd\
 	fMgrd\
-	platformd
+	platformd\
+	notifierd
 
 IPCS=sysd\
 	fMgrd\
-	platformd
+	platformd\
+	notifierd
 
 all: ipc exe
 

@@ -125,7 +125,6 @@ func (rpcHdl *rpcServiceHandler) GetBulkFan(fromIdx, count platformd.Int) (*plat
 	return &getBulkObj, err
 }
 
-// TODO
 func (rpcHdl *rpcServiceHandler) GetBulkSfp(fromIdx, count platformd.Int) (*platformd.SfpGetInfo, error) {
 	var getBulkObj platformd.SfpGetInfo
 	var err error
@@ -151,16 +150,32 @@ func (rpcHdl *rpcServiceHandler) GetSfp(sfpID int32) (*platformd.Sfp, error) {
 	return &rpcObj, nil
 }
 
-func (rpcHdl *rpcServiceHandler) GetBulkSfpState(fromIdx, count platformd.Int) (*platformd.SfpStateGetInfo, error) {
-	var obj platformd.SfpStateGetInfo
+func (rpcHdl *rpcServiceHandler) GetSfpState(sfpId int32) (*platformd.SfpState, error) {
+	var rpcObj *platformd.SfpState
 
-	return &obj, nil
+	obj, err := api.GetSfpState(sfpId)
+	if err == nil {
+		rpcObj = convertToRPCFmtSfpState(obj)
+	}
+	return rpcObj, err
 }
 
-func (rpcHdl *rpcServiceHandler) GetSfpState(sfpId int32) (*platformd.SfpState, error) {
-	var obj platformd.SfpState
+func (rpcHdl *rpcServiceHandler) GetBulkSfpState(fromIdx, count platformd.Int) (*platformd.SfpStateGetInfo, error) {
+	var getBulkObj platformd.SfpStateGetInfo
+	var err error
 
-	return &obj, nil
+	info, err := api.GetBulkSfpState(int(fromIdx), int(count))
+	if err != nil {
+		return nil, err
+	}
+	getBulkObj.StartIdx = fromIdx
+	getBulkObj.EndIdx = platformd.Int(info.EndIdx)
+	getBulkObj.More = info.More
+	getBulkObj.Count = platformd.Int(len(info.List))
+	for idx := 0; idx < len(info.List); idx++ {
+		getBulkObj.SfpStateList = append(getBulkObj.SfpStateList, convertToRPCFmtSfpState(info.List[idx]))
+	}
+	return &getBulkObj, err
 }
 
 // TODO

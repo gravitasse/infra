@@ -124,6 +124,19 @@ func (svr *PlatformdServer) handleRPCRequest(req *ServerRequest) {
 			retObj.RetVal, retObj.Err = svr.updateFanConfig(val.FanOldCfg, val.FanNewCfg, val.AttrSet)
 		}
 		svr.ReplyChan <- interface{}(&retObj)
+	case GET_SFP_STATE:
+		var retObj GetSfpStateOutArgs
+		if val, ok := req.Data.(*GetSfpStateInArgs); ok {
+			retObj.Obj, retObj.Err = svr.getSfpState(val.SfpId)
+		}
+		svr.Logger.Info(fmt.Sprintln("Server GET_SFP_STATE request replying -", retObj))
+		svr.ReplyChan <- interface{}(&retObj)
+	case GET_BULK_SFP_STATE:
+		var retObj GetBulkSfpStateOutArgs
+		if val, ok := req.Data.(*GetBulkInArgs); ok {
+			retObj.BulkInfo, retObj.Err = svr.getBulkSfpState(val.FromIdx, val.Count)
+		}
+		svr.ReplyChan <- interface{}(&retObj)
 	case GET_PLATFORM_STATE:
 		var retObj GetPlatformStateOutArgs
 		if val, ok := req.Data.(*GetPlatformStateInArgs); ok {

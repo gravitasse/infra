@@ -81,10 +81,10 @@ type SYSDServer struct {
 	KaRecvCh                 chan string
 	DaemonMap                map[string]*DaemonInfo
 	DaemonConfigCh           chan DaemonConfig
-	UpdateInfoInDbCh         chan string
 	DaemonRestartCh          chan string
 	SysInfo                  *objects.SystemParam
 	SysUpdCh                 chan *SystemParamUpdate
+	DaemonStateDBCh          chan string
 }
 
 func NewSYSDServer(logger *logging.Writer, dbHdl *dbutils.DBUtil, paramsDir string) *SYSDServer {

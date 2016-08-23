@@ -57,19 +57,6 @@ typedef struct fan_info {
 	char SerialNum[DEFAULT_SIZE];
 } fan_info_t;
 
-/*
-OTHER INFO AVAILABLE::
-
-    char* manufacture_date;
-    uint8_t     mac[6];
-    char* part_number;
-    uint8_t     device_version;
-    uint16_t    mac_range;
-    char* country_code;
-    char* diag_version;
-    char* service_tag;
-    uint32_t    crc;
-*/
 typedef struct sys_info {
     char product_name[DEFAULT_SIZE];
     char serial_number[DEFAULT_SIZE];
@@ -79,6 +66,21 @@ typedef struct sys_info {
     char onie_version[DEFAULT_SIZE];
     char label_revision[DEFAULT_SIZE];
 } sys_info_t;
+
+typedef enum {
+    SFP_ERROR = -1,
+    SFP_OK = 0,
+    SFP_MISSING = 1,
+}SFP_RET;
+
+typedef struct sfp_info {
+   int sfp_id;
+   unsigned int spf_speed; /* in Mbps */
+   int sfp_present;
+   int sfp_los;
+   char serial_number[12];
+   char eeprom[256];
+} sfp_info_t;
 
 
 #endif // PLUGINCOMMON_H

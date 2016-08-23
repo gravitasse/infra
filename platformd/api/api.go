@@ -176,6 +176,45 @@ func GetBulkSfpConfig(fromIdx, count int) (*objects.SfpConfigGetInfo, error) {
 	return &obj, nil
 }
 
+func GetSfpState(sfpId int32) (*objects.SfpState, error) {
+	var obj objects.SfpState
+
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_SFP_STATE,
+		Data: interface{}(&server.GetSfpStateInArgs{
+			SfpId: sfpId,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetSfpStateOutArgs); ok {
+		return retObj.Obj, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during SfpStateGet")
+	}
+
+	return &obj, nil
+}
+
+func GetBulkSfpState(fromIdx, count int) (*objects.SfpStateGetInfo, error) {
+	var obj objects.SfpStateGetInfo
+
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_BULK_SFP_STATE,
+		Data: interface{}(&server.GetBulkInArgs{
+			FromIdx: fromIdx,
+			Count:   count,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetBulkSfpStateOutArgs); ok {
+		return retObj.BulkInfo, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetBulkSfpState")
+	}
+
+	return &obj, nil
+}
+
 func GetThermalState(thermalId int32) (*objects.ThermalState, error) {
 	svr.ReqChan <- &server.ServerRequest{
 		Op: server.GET_THERMAL_STATE,
