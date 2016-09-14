@@ -20,42 +20,13 @@
 // |  |     |  `----.|  |____ /  .  \  .----)   |      \    /\    /    |  |     |  |     |  `----.|  |  |  |
 // |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__|
 //
+//
+#ifndef OPENBMC_VOYAGER_H
+#define OPENBMC_VOYAGER_H
 
-package objects
+#include "pluginCommon.h"
 
-type FaultState struct {
-	OwnerId          int32
-	EventId          int32
-	OwnerName        string
-	EventName        string
-	SrcObjName       string
-	Description      string
-	OccuranceTime    string
-	SrcObjKey        string
-	SrcObjUUID       string
-	ResolutionTime   string
-	ResolutionReason string
-}
+int GetQsfpState(qsfp_info_t *info, int id); 
 
-type FaultStateGetInfo struct {
-	EndIdx int
-	Count  int
-	More   bool
-	List   []FaultState
-}
+#endif //OPENBMC_VOYAGER_H
 
-const (
-	ALL_EVENTS = "all"
-)
-
-type FaultEnable struct {
-	OwnerName string
-	EventName string
-	Enable    bool
-}
-
-type FaultClear struct {
-	OwnerName  string
-	EventName  string
-	SrcObjUUID string
-}

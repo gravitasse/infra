@@ -245,3 +245,433 @@ func GetBulkThermalState(fromIdx, count int) (*objects.ThermalStateGetInfo, erro
 		return nil, errors.New("Error: Invalid response received from server during GetBulkThermalState")
 	}
 }
+
+func GetFanSensorState(name string) (*objects.FanSensorState, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_FAN_SENSOR_STATE,
+		Data: interface{}(&server.GetFanSensorStateInArgs{
+			Name: name,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetFanSensorStateOutArgs); ok {
+		return retObj.Obj, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetFanSensorState")
+	}
+}
+
+func GetBulkFanSensorState(fromIdx, count int) (*objects.FanSensorStateGetInfo, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_BULK_FAN_SENSOR_STATE,
+		Data: interface{}(&server.GetBulkInArgs{
+			FromIdx: fromIdx,
+			Count:   count,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetBulkFanSensorStateOutArgs); ok {
+		return retObj.BulkInfo, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetBulkFanSensorState")
+	}
+}
+
+func UpdateFanSensor(oldCfg *objects.FanSensorConfig, newCfg *objects.FanSensorConfig, attrset []bool) (bool, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.UPDATE_FAN_SENSOR_CONFIG,
+		Data: interface{}(&server.UpdateFanSensorConfigInArgs{
+			FanSensorOldCfg: oldCfg,
+			FanSensorNewCfg: newCfg,
+			AttrSet:         attrset,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.UpdateConfigOutArgs); ok {
+		return retObj.RetVal, retObj.Err
+	}
+	return false, errors.New("Error: Invalid response received from server during UpdateFanSensor")
+}
+
+func GetBulkFanSensorConfig(fromIdx, count int) (*objects.FanSensorConfigGetInfo, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_BULK_FAN_SENSOR_CONFIG,
+		Data: interface{}(&server.GetBulkInArgs{
+			FromIdx: fromIdx,
+			Count:   count,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetBulkFanSensorConfigOutArgs); ok {
+		return retObj.BulkInfo, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetBulkFanSensorConfig")
+	}
+}
+
+func GetTemperatureSensorState(name string) (*objects.TemperatureSensorState, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_TEMPERATURE_SENSOR_STATE,
+		Data: interface{}(&server.GetTemperatureSensorStateInArgs{
+			Name: name,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetTemperatureSensorStateOutArgs); ok {
+		return retObj.Obj, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetTemperatureSensorState")
+	}
+}
+
+func GetBulkTemperatureSensorState(fromIdx, count int) (*objects.TemperatureSensorStateGetInfo, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_BULK_TEMPERATURE_SENSOR_STATE,
+		Data: interface{}(&server.GetBulkInArgs{
+			FromIdx: fromIdx,
+			Count:   count,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetBulkTemperatureSensorStateOutArgs); ok {
+		return retObj.BulkInfo, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetBulkTemperatureSensorState")
+	}
+}
+
+func UpdateTemperatureSensor(oldCfg *objects.TemperatureSensorConfig, newCfg *objects.TemperatureSensorConfig, attrset []bool) (bool, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.UPDATE_TEMPERATURE_SENSOR_CONFIG,
+		Data: interface{}(&server.UpdateTemperatureSensorConfigInArgs{
+			TemperatureSensorOldCfg: oldCfg,
+			TemperatureSensorNewCfg: newCfg,
+			AttrSet:                 attrset,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.UpdateConfigOutArgs); ok {
+		return retObj.RetVal, retObj.Err
+	}
+	return false, errors.New("Error: Invalid response received from server during UpdateTemperatureSensor")
+}
+
+func GetBulkTemperatureSensorConfig(fromIdx, count int) (*objects.TemperatureSensorConfigGetInfo, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_BULK_TEMPERATURE_SENSOR_CONFIG,
+		Data: interface{}(&server.GetBulkInArgs{
+			FromIdx: fromIdx,
+			Count:   count,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetBulkTemperatureSensorConfigOutArgs); ok {
+		return retObj.BulkInfo, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetBulkTemperatureSensorConfig")
+	}
+}
+
+func GetVoltageSensorState(name string) (*objects.VoltageSensorState, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_VOLTAGE_SENSOR_STATE,
+		Data: interface{}(&server.GetVoltageSensorStateInArgs{
+			Name: name,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetVoltageSensorStateOutArgs); ok {
+		return retObj.Obj, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetVoltageSensorState")
+	}
+}
+
+func GetBulkVoltageSensorState(fromIdx, count int) (*objects.VoltageSensorStateGetInfo, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_BULK_VOLTAGE_SENSOR_STATE,
+		Data: interface{}(&server.GetBulkInArgs{
+			FromIdx: fromIdx,
+			Count:   count,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetBulkVoltageSensorStateOutArgs); ok {
+		return retObj.BulkInfo, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetBulkVoltageSensorState")
+	}
+}
+
+func UpdateVoltageSensor(oldCfg *objects.VoltageSensorConfig, newCfg *objects.VoltageSensorConfig, attrset []bool) (bool, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.UPDATE_VOLTAGE_SENSOR_CONFIG,
+		Data: interface{}(&server.UpdateVoltageSensorConfigInArgs{
+			VoltageSensorOldCfg: oldCfg,
+			VoltageSensorNewCfg: newCfg,
+			AttrSet:             attrset,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.UpdateConfigOutArgs); ok {
+		return retObj.RetVal, retObj.Err
+	}
+	return false, errors.New("Error: Invalid response received from server during UpdateVoltageSensor")
+}
+
+func GetBulkVoltageSensorConfig(fromIdx, count int) (*objects.VoltageSensorConfigGetInfo, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_BULK_VOLTAGE_SENSOR_CONFIG,
+		Data: interface{}(&server.GetBulkInArgs{
+			FromIdx: fromIdx,
+			Count:   count,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetBulkVoltageSensorConfigOutArgs); ok {
+		return retObj.BulkInfo, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetBulkVoltageSensorConfig")
+	}
+}
+
+func GetPowerConverterSensorState(name string) (*objects.PowerConverterSensorState, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_POWER_CONVERTER_SENSOR_STATE,
+		Data: interface{}(&server.GetPowerConverterSensorStateInArgs{
+			Name: name,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetPowerConverterSensorStateOutArgs); ok {
+		return retObj.Obj, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetPowerConverterSensorState")
+	}
+}
+
+func GetBulkPowerConverterSensorState(fromIdx, count int) (*objects.PowerConverterSensorStateGetInfo, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_BULK_POWER_CONVERTER_SENSOR_STATE,
+		Data: interface{}(&server.GetBulkInArgs{
+			FromIdx: fromIdx,
+			Count:   count,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetBulkPowerConverterSensorStateOutArgs); ok {
+		return retObj.BulkInfo, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetBulkPowerConverterSensorState")
+	}
+}
+
+func UpdatePowerConverterSensor(oldCfg *objects.PowerConverterSensorConfig, newCfg *objects.PowerConverterSensorConfig, attrset []bool) (bool, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.UPDATE_POWER_CONVERTER_SENSOR_CONFIG,
+		Data: interface{}(&server.UpdatePowerConverterSensorConfigInArgs{
+			PowerConverterSensorOldCfg: oldCfg,
+			PowerConverterSensorNewCfg: newCfg,
+			AttrSet:                    attrset,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.UpdateConfigOutArgs); ok {
+		return retObj.RetVal, retObj.Err
+	}
+	return false, errors.New("Error: Invalid response received from server during UpdatePowerConverterSensor")
+}
+
+func GetBulkPowerConverterSensorConfig(fromIdx, count int) (*objects.PowerConverterSensorConfigGetInfo, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_BULK_POWER_CONVERTER_SENSOR_CONFIG,
+		Data: interface{}(&server.GetBulkInArgs{
+			FromIdx: fromIdx,
+			Count:   count,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetBulkPowerConverterSensorConfigOutArgs); ok {
+		return retObj.BulkInfo, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetBulkPowerConverterSensorConfig")
+	}
+}
+
+func GetQsfpState(QsfpId int32) (*objects.QsfpState, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_QSFP_STATE,
+		Data: interface{}(&server.GetQsfpStateInArgs{
+			QsfpId: QsfpId,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetQsfpStateOutArgs); ok {
+		return retObj.Obj, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetQsfpState")
+	}
+}
+
+func GetBulkQsfpState(fromIdx, count int) (*objects.QsfpStateGetInfo, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_BULK_QSFP_STATE,
+		Data: interface{}(&server.GetBulkInArgs{
+			FromIdx: fromIdx,
+			Count:   count,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetBulkQsfpStateOutArgs); ok {
+		return retObj.BulkInfo, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetBulkQsfpState")
+	}
+}
+
+func UpdateQsfp(oldCfg *objects.QsfpConfig, newCfg *objects.QsfpConfig, attrset []bool) (bool, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.UPDATE_QSFP_CONFIG,
+		Data: interface{}(&server.UpdateQsfpConfigInArgs{
+			QsfpOldCfg: oldCfg,
+			QsfpNewCfg: newCfg,
+			AttrSet:    attrset,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.UpdateConfigOutArgs); ok {
+		return retObj.RetVal, retObj.Err
+	}
+	return false, errors.New("Error: Invalid response received from server during UpdateQsfp")
+}
+
+func GetBulkQsfpConfig(fromIdx, count int) (*objects.QsfpConfigGetInfo, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_BULK_QSFP_CONFIG,
+		Data: interface{}(&server.GetBulkInArgs{
+			FromIdx: fromIdx,
+			Count:   count,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetBulkQsfpConfigOutArgs); ok {
+		return retObj.BulkInfo, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetBulkQsfpConfig")
+	}
+}
+
+func GetPlatformMgmtDeviceState(deviceName string) (*objects.PlatformMgmtDeviceState, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_PLATFORM_MGMT_DEVICE_STATE,
+		Data: interface{}(&server.GetPlatformMgmtDeviceStateInArgs{
+			DeviceName: deviceName,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetPlatformMgmtDeviceStateOutArgs); ok {
+		return retObj.Obj, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetPlatformMgmtDeviceState")
+	}
+}
+
+func GetBulkPlatformMgmtDeviceState(fromIdx, count int) (*objects.PlatformMgmtDeviceStateGetInfo, error) {
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_BULK_PLATFORM_MGMT_DEVICE_STATE,
+		Data: interface{}(&server.GetBulkInArgs{
+			FromIdx: fromIdx,
+			Count:   count,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetBulkPlatformMgmtDeviceStateOutArgs); ok {
+		return retObj.BulkInfo, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetBulkPlatformMgmtDeviceState")
+	}
+}
+
+func GetFanSensorPMDataState(name string, class string) (*objects.FanSensorPMState, error) {
+	if class != "Class-A" &&
+		class != "Class-B" &&
+		class != "Class-C" {
+		return nil, errors.New("Invalid Class")
+	}
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_FAN_SENSOR_PM_STATE,
+		Data: interface{}(&server.GetFanSensorPMStateInArgs{
+			Name:  name,
+			Class: class,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetFanSensorPMStateOutArgs); ok {
+		return retObj.Obj, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetFanSensorState")
+	}
+}
+
+func GetTempSensorPMDataState(name string, class string) (*objects.TemperatureSensorPMState, error) {
+	if class != "Class-A" &&
+		class != "Class-B" &&
+		class != "Class-C" {
+		return nil, errors.New("Invalid Class")
+	}
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_TEMPERATURE_SENSOR_STATE,
+		Data: interface{}(&server.GetTempSensorPMStateInArgs{
+			Name:  name,
+			Class: class,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetTempSensorPMStateOutArgs); ok {
+		return retObj.Obj, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetTempSensorState")
+	}
+}
+
+func GetVoltageSensorPMDataState(name string, class string) (*objects.VoltageSensorPMState, error) {
+	if class != "Class-A" &&
+		class != "Class-B" &&
+		class != "Class-C" {
+		return nil, errors.New("Invalid Class")
+	}
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_VOLTAGE_SENSOR_PM_STATE,
+		Data: interface{}(&server.GetVoltageSensorPMStateInArgs{
+			Name:  name,
+			Class: class,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetVoltageSensorPMStateOutArgs); ok {
+		return retObj.Obj, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetVoltageSensorState")
+	}
+}
+
+func GetPowerConverterSensorPMDataState(name string, class string) (*objects.PowerConverterSensorPMState, error) {
+	if class != "Class-A" &&
+		class != "Class-B" &&
+		class != "Class-C" {
+		return nil, errors.New("Invalid Class")
+	}
+	svr.ReqChan <- &server.ServerRequest{
+		Op: server.GET_POWER_CONVERTER_SENSOR_PM_STATE,
+		Data: interface{}(&server.GetPowerConverterSensorPMStateInArgs{
+			Name:  name,
+			Class: class,
+		}),
+	}
+	ret := <-svr.ReplyChan
+	if retObj, ok := ret.(*server.GetPowerConverterSensorPMStateOutArgs); ok {
+		return retObj.Obj, retObj.Err
+	} else {
+		return nil, errors.New("Error: Invalid response received from server during GetPowerConverterSensorState")
+	}
+}

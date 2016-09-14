@@ -21,41 +21,33 @@
 // |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__|
 //
 
-package objects
+package server
 
-type FaultState struct {
-	OwnerId          int32
-	EventId          int32
-	OwnerName        string
-	EventName        string
-	SrcObjName       string
-	Description      string
-	OccuranceTime    string
-	SrcObjKey        string
-	SrcObjUUID       string
-	ResolutionTime   string
-	ResolutionReason string
-}
-
-type FaultStateGetInfo struct {
-	EndIdx int
-	Count  int
-	More   bool
-	List   []FaultState
-}
-
-const (
-	ALL_EVENTS = "all"
+import (
+	"infra/platformd/objects"
 )
 
-type FaultEnable struct {
-	OwnerName string
-	EventName string
-	Enable    bool
+func (svr *PlatformdServer) getPowerConverterSensorState(Name string) (*objects.PowerConverterSensorState, error) {
+	retObj, err := svr.pluginMgr.GetPowerConverterSensorState(Name)
+	return retObj, err
 }
 
-type FaultClear struct {
-	OwnerName  string
-	EventName  string
-	SrcObjUUID string
+func (svr *PlatformdServer) getBulkPowerConverterSensorState(fromIdx int, count int) (*objects.PowerConverterSensorStateGetInfo, error) {
+	retObj, err := svr.pluginMgr.GetBulkPowerConverterSensorState(fromIdx, count)
+	return retObj, err
+}
+
+func (svr *PlatformdServer) getBulkPowerConverterSensorConfig(fromIdx int, count int) (*objects.PowerConverterSensorConfigGetInfo, error) {
+	retObj, err := svr.pluginMgr.GetBulkPowerConverterSensorConfig(fromIdx, count)
+	return retObj, err
+}
+
+func (svr *PlatformdServer) updatePowerConverterSensorConfig(oldCfg *objects.PowerConverterSensorConfig, newCfg *objects.PowerConverterSensorConfig, attrset []bool) (bool, error) {
+	ret, err := svr.pluginMgr.UpdatePowerConverterSensorConfig(oldCfg, newCfg, attrset)
+	return ret, err
+}
+
+func (svr *PlatformdServer) getPowerConverterSensorPMState(Name string, Class string) (*objects.PowerConverterSensorPMState, error) {
+	retObj, err := svr.pluginMgr.GetPowerConverterSensorPMState(Name, Class)
+	return retObj, err
 }

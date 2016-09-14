@@ -23,39 +23,49 @@
 
 package objects
 
-type FaultState struct {
-	OwnerId          int32
-	EventId          int32
-	OwnerName        string
-	EventName        string
-	SrcObjName       string
-	Description      string
-	OccuranceTime    string
-	SrcObjKey        string
-	SrcObjUUID       string
-	ResolutionTime   string
-	ResolutionReason string
+type TemperatureSensorState struct {
+	Name               string
+	CurrentTemperature float64
 }
 
-type FaultStateGetInfo struct {
+type TemperatureSensorStateGetInfo struct {
 	EndIdx int
 	Count  int
 	More   bool
-	List   []FaultState
+	List   []*TemperatureSensorState
+}
+
+type TemperatureSensorConfig struct {
+	Name                   string
+	AdminState             string
+	HigherAlarmThreshold   float64
+	HigherWarningThreshold float64
+	LowerWarningThreshold  float64
+	LowerAlarmThreshold    float64
+}
+
+type TemperatureSensorConfigGetInfo struct {
+	EndIdx int
+	Count  int
+	More   bool
+	List   []*TemperatureSensorConfig
 }
 
 const (
-	ALL_EVENTS = "all"
+	TEMP_SENSOR_UPDATE_ADMIN_STATE            = 0x1
+	TEMP_SENSOR_UPDATE_HIGHER_ALARM_THRESHOLD = 0x2
+	TEMP_SENSOR_UPDATE_HIGHER_WARN_THRESHOLD  = 0x4
+	TEMP_SENSOR_UPDATE_LOWER_WARN_THRESHOLD   = 0x8
+	TEMP_SENSOR_UPDATE_LOWER_ALARM_THRESHOLD  = 0x10
 )
 
-type FaultEnable struct {
-	OwnerName string
-	EventName string
-	Enable    bool
+type TemperatureSensorPMData struct {
+	TimeStamp string
+	Value     float64
 }
 
-type FaultClear struct {
-	OwnerName  string
-	EventName  string
-	SrcObjUUID string
+type TemperatureSensorPMState struct {
+	Name  string
+	Class string
+	Data  []interface{}
 }

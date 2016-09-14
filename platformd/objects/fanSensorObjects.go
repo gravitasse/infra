@@ -23,39 +23,49 @@
 
 package objects
 
-type FaultState struct {
-	OwnerId          int32
-	EventId          int32
-	OwnerName        string
-	EventName        string
-	SrcObjName       string
-	Description      string
-	OccuranceTime    string
-	SrcObjKey        string
-	SrcObjUUID       string
-	ResolutionTime   string
-	ResolutionReason string
+type FanSensorState struct {
+	Name         string
+	CurrentSpeed int32
 }
 
-type FaultStateGetInfo struct {
+type FanSensorStateGetInfo struct {
 	EndIdx int
 	Count  int
 	More   bool
-	List   []FaultState
+	List   []*FanSensorState
+}
+
+type FanSensorConfig struct {
+	Name                   string
+	AdminState             string
+	HigherAlarmThreshold   int32
+	HigherWarningThreshold int32
+	LowerWarningThreshold  int32
+	LowerAlarmThreshold    int32
+}
+
+type FanSensorConfigGetInfo struct {
+	EndIdx int
+	Count  int
+	More   bool
+	List   []*FanSensorConfig
 }
 
 const (
-	ALL_EVENTS = "all"
+	FAN_SENSOR_UPDATE_ADMIN_STATE            = 0x1
+	FAN_SENSOR_UPDATE_HIGHER_ALARM_THRESHOLD = 0x2
+	FAN_SENSOR_UPDATE_HIGHER_WARN_THRESHOLD  = 0x4
+	FAN_SENSOR_UPDATE_LOWER_WARN_THRESHOLD   = 0x8
+	FAN_SENSOR_UPDATE_LOWER_ALARM_THRESHOLD  = 0x10
 )
 
-type FaultEnable struct {
-	OwnerName string
-	EventName string
-	Enable    bool
+type FanSensorPMData struct {
+	TimeStamp string
+	Value     int32
 }
 
-type FaultClear struct {
-	OwnerName  string
-	EventName  string
-	SrcObjUUID string
+type FanSensorPMState struct {
+	Name  string
+	Class string
+	Data  []interface{}
 }

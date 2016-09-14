@@ -41,7 +41,9 @@ func NewNotifier(param *objects.NotifierParam) *Notifier {
 	notifier := &Notifier{}
 	notifier.logger = param.Logger
 	notifier.DmnList = append(notifier.DmnList, param.DmnList...)
-	notifier.upgrader = websocket.Upgrader{}
+	notifier.upgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool { return true },
+	}
 	return notifier
 }
 

@@ -23,39 +23,19 @@
 
 package objects
 
-type FaultState struct {
-	OwnerId          int32
-	EventId          int32
-	OwnerName        string
-	EventName        string
-	SrcObjName       string
-	Description      string
-	OccuranceTime    string
-	SrcObjKey        string
-	SrcObjUUID       string
-	ResolutionTime   string
-	ResolutionReason string
+type PlatformMgmtDeviceState struct {
+	DeviceName  string
+	Uptime      string
+	Description string
+	ResetReason string
+	MemoryUsage string
+	Version     string
+	CPUUsage    string
 }
 
-type FaultStateGetInfo struct {
+type PlatformMgmtDeviceStateGetInfo struct {
 	EndIdx int
 	Count  int
 	More   bool
-	List   []FaultState
-}
-
-const (
-	ALL_EVENTS = "all"
-)
-
-type FaultEnable struct {
-	OwnerName string
-	EventName string
-	Enable    bool
-}
-
-type FaultClear struct {
-	OwnerName  string
-	EventName  string
-	SrcObjUUID string
+	List   []*PlatformMgmtDeviceState
 }

@@ -256,3 +256,20 @@ func (driver *onlpDriver) GetMaxNumOfThermal() int {
 func (driver *onlpDriver) GetThermalState(thermalId int32) (tState pluginCommon.ThermalState, err error) {
 	return tState, err
 }
+
+func (driver *onlpDriver) GetAllSensorState(state *pluginCommon.SensorState) error {
+	return errors.New("Not supported")
+}
+
+func (driver *onlpDriver) GetQsfpState(Id int32) (retObj pluginCommon.QsfpState, err error) {
+	return retObj, nil
+}
+
+func (driver *onlpDriver) GetMaxNumOfQsfp() int {
+	driver.logger.Info("Inside Dummy: GetMaxNumOfQsfps()")
+	return 0
+}
+
+func (driver *onlpDriver) GetPlatformMgmtDeviceState(state *pluginCommon.PlatformMgmtDeviceState) error {
+	return errors.New("Not supported")
+}

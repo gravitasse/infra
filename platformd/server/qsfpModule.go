@@ -21,41 +21,28 @@
 // |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__|
 //
 
-package objects
+package server
 
-type FaultState struct {
-	OwnerId          int32
-	EventId          int32
-	OwnerName        string
-	EventName        string
-	SrcObjName       string
-	Description      string
-	OccuranceTime    string
-	SrcObjKey        string
-	SrcObjUUID       string
-	ResolutionTime   string
-	ResolutionReason string
-}
-
-type FaultStateGetInfo struct {
-	EndIdx int
-	Count  int
-	More   bool
-	List   []FaultState
-}
-
-const (
-	ALL_EVENTS = "all"
+import (
+	"infra/platformd/objects"
 )
 
-type FaultEnable struct {
-	OwnerName string
-	EventName string
-	Enable    bool
+func (svr *PlatformdServer) getQsfpState(QsfpId int32) (*objects.QsfpState, error) {
+	retObj, err := svr.pluginMgr.GetQsfpState(QsfpId)
+	return retObj, err
 }
 
-type FaultClear struct {
-	OwnerName  string
-	EventName  string
-	SrcObjUUID string
+func (svr *PlatformdServer) getBulkQsfpState(fromIdx int, count int) (*objects.QsfpStateGetInfo, error) {
+	retObj, err := svr.pluginMgr.GetBulkQsfpState(fromIdx, count)
+	return retObj, err
+}
+
+func (svr *PlatformdServer) getBulkQsfpConfig(fromIdx int, count int) (*objects.QsfpConfigGetInfo, error) {
+	retObj, err := svr.pluginMgr.GetBulkQsfpConfig(fromIdx, count)
+	return retObj, err
+}
+
+func (svr *PlatformdServer) updateQsfpConfig(oldCfg *objects.QsfpConfig, newCfg *objects.QsfpConfig, attrset []bool) (bool, error) {
+	ret, err := svr.pluginMgr.UpdateQsfpConfig(oldCfg, newCfg, attrset)
+	return ret, err
 }

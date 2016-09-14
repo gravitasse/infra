@@ -29,6 +29,7 @@ import (
 	"fmt"
 	"infra/fMgrd/objects"
 	//"models/events"
+	"strings"
 	"sync"
 	"time"
 	"utils/dbutils"
@@ -237,34 +238,53 @@ func (fMgr *FaultManager) initFMgrDS() error {
 	return nil
 }
 
+func (fMgr *FaultManager) faultEnable(evtKey EventKey, enable bool) (retVal bool, err error) {
+	_, exist := fMgr.FaultEventMap[evtKey]
+	if !exist {
+		err = errors.New("Unable to find the corresponding fault event")
+	} else {
+		if enable == false {
+			err = fMgr.DisableFaults(evtKey)
+			if err == nil {
+				fMgr.ClearExistingFaults(evtKey, "", FAULTDISABLED)
+				fMgr.ClearExistingAlarms(evtKey, "", FAULTDISABLED)
+				retVal = true
+			}
+		} else {
+			err = fMgr.EnableFaults(evtKey)
+			if err == nil {
+				retVal = true
+			}
+		}
+	}
+	return retVal, err
+}
+
 func (fMgr *FaultManager) FaultEnableAction(config *objects.FaultEnable) (retVal bool, err error) {
 	fMgr.PauseEventProcessCh <- true
 	<-fMgr.PauseEventProcessAckCh
-	evtKeyStr := EventKeyStr{
-		OwnerName: config.OwnerName,
-		EventName: config.EventName,
-	}
-	evtKey, exist := fMgr.OwnerEventNameMap[evtKeyStr]
-	if !exist {
-		err = errors.New("Unable to find the corresponding event")
-	} else {
-		_, exist := fMgr.FaultEventMap[evtKey]
-		if !exist {
-			err = errors.New("Unable to find the corresponding faulty event")
-		} else {
-			if config.Enable == false {
-				err = fMgr.DisableFaults(evtKey)
-				if err == nil {
-					fMgr.ClearExistingFaults(evtKey, "", FAULTDISABLED)
-					fMgr.ClearExistingAlarms(evtKey, "", FAULTDISABLED)
-					retVal = true
+	if strings.ToLower(config.EventName) == objects.ALL_EVENTS {
+		ownerName := strings.ToLower(config.OwnerName)
+		for evtKeyStr, evtKey := range fMgr.OwnerEventNameMap {
+			if strings.ToLower(evtKeyStr.OwnerName) == ownerName {
+				_, exist := fMgr.FaultEventMap[evtKey]
+				if exist {
+					retVal, err = fMgr.faultEnable(evtKey, config.Enable)
 				}
 			} else {
-				err = fMgr.EnableFaults(evtKey)
-				if err == nil {
-					retVal = true
-				}
+				continue
 			}
+		}
+	} else {
+		evtKeyStr := EventKeyStr{
+			OwnerName: config.OwnerName,
+			EventName: config.EventName,
+		}
+		evtKey, exist := fMgr.OwnerEventNameMap[evtKeyStr]
+		if !exist {
+			err = errors.New("Unable to find the corresponding event")
+		} else {
+			retVal, err = fMgr.faultEnable(evtKey, config.Enable)
 		}
 	}
 	fMgr.PauseEventProcessCh <- true
@@ -274,7 +294,7 @@ func (fMgr *FaultManager) FaultEnableAction(config *objects.FaultEnable) (retVal
 func (fMgr *FaultManager) DisableFaults(evtKey EventKey) error {
 	fEnt, _ := fMgr.FaultEventMap[evtKey]
 	if fEnt.RaiseFault == false {
-		return errors.New("Fault is already enabled")
+		return errors.New("Fault is already disabled")
 	}
 	fEnt.RaiseFault = false
 	fMgr.FaultEventMap[evtKey] = fEnt

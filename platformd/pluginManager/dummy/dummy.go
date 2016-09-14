@@ -23,6 +23,7 @@
 package dummy
 
 import (
+	"errors"
 	"infra/platformd/objects"
 	"infra/platformd/pluginManager/pluginCommon"
 	"utils/logging"
@@ -110,4 +111,21 @@ func (driver *dummyDriver) GetThermalState(thermalId int32) (retObj pluginCommon
 func (driver *dummyDriver) GetMaxNumOfThermal() int {
 	driver.logger.Info("Inside Dummy: GetMaxNumOfThermal()")
 	return 0
+}
+
+func (driver *dummyDriver) GetAllSensorState(state *pluginCommon.SensorState) error {
+	return errors.New("Not supported")
+}
+
+func (driver *dummyDriver) GetQsfpState(Id int32) (retObj pluginCommon.QsfpState, err error) {
+	return retObj, nil
+}
+
+func (driver *dummyDriver) GetMaxNumOfQsfp() int {
+	driver.logger.Info("Inside Dummy: GetMaxNumOfQsfps()")
+	return 0
+}
+
+func (driver *dummyDriver) GetPlatformMgmtDeviceState(state *pluginCommon.PlatformMgmtDeviceState) error {
+	return nil
 }

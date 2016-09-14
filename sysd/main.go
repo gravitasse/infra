@@ -59,7 +59,7 @@ func main() {
 
 	clientsFileName := fileName + "clients.json"
 
-	logger.Info(fmt.Sprintln("Starting Sysd Server..."))
+	logger.Info("Starting Sysd Server...")
 	sysdServer := server.NewSYSDServer(logger, dbHdl, fileName)
 	// Initialize sysd server
 	sysdServer.InitServer()
@@ -73,7 +73,7 @@ func main() {
 	// Read IpTableAclConfig during restart case
 	sysdServer.ReadIpAclConfigFromDB(dbHdl)
 
-	logger.Info(fmt.Sprintln("Starting Sysd Config listener..."))
+	logger.Info("Starting Sysd Config listener...")
 	confIface := rpc.NewSYSDHandler(logger, sysdServer)
 	rpc.StartServer(logger, confIface, clientsFileName)
 }

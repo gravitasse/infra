@@ -19,6 +19,7 @@ endif
 #CGO CFLAGS
 CGO_CFLAGS=-I$(SR_PLATFORMD_CODE_BASE)/pluginManager/pluginCommon/
 export CGO_CFLAGS+=-I$(SR_PLATFORMD_CODE_BASE)/pluginManager/onlp/inc
+export CGO_CFLAGS+=-I$(SR_PLATFORMD_CODE_BASE)/pluginManager/openBMCVoyager
 export CGO_LDFLAGS+=-ldl -Wl,--unresolved-symbols=ignore-in-shared-libs
 
 .PHONY: all
@@ -44,6 +45,8 @@ else ifeq ($(PLATFORM_BUILD_TARGET), onlp)
 	install params/onlp_platformd.conf $(PARAMSDIR)/platformd.conf
 else ifeq ($(PLATFORM_BUILD_TARGET), dummy)
 	install params/dummy_platformd.conf $(PARAMSDIR)/platformd.conf
+else ifeq ($(PLATFORM_BUILD_TARGET), openBMCVoyager)
+	install params/openBMCVoyager_platformd.conf $(PARAMSDIR)/platformd.conf
 else
 	install params/dummy_platformd.conf $(PARAMSDIR)/platformd.conf
 endif

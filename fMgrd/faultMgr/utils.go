@@ -24,36 +24,30 @@
 package faultMgr
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"models/events"
 	"strings"
 )
 
-func (fMgr *FaultManager) generateFaultObjKey(srcObjName string, srcObjKey interface{}) (FaultObjKey, error) {
-	key := fmt.Sprintf("%v", srcObjKey)
-	str := strings.Split(fmt.Sprintf("%v", key), "map[")
-	key = strings.Split(str[1], "]")[0]
-	srcObjUUID, err := fMgr.getUUID(srcObjName, key)
+func (fMgr *FaultManager) generateFaultObjKey(ownerName, srcObjName string, srcObjKey interface{}) (FaultObjKey, string, string, error) {
+	objKey, dbObjKey, err := getEventObjKey(ownerName, srcObjName, srcObjKey)
+	if err != nil {
+		fMgr.logger.Err("Unable to find the Obj Key", srcObjName, srcObjKey, err)
+		return "", "", "", errors.New(fmt.Sprintln("Unable to find the ObjKey of", srcObjName, srcObjKey, err))
+	}
+
+	srcObjUUID, err := fMgr.getUUID(srcObjName, dbObjKey)
 	if err != nil {
 		fMgr.logger.Err("Unable to find the UUID of", srcObjName, srcObjKey, err)
-		return "", errors.New(fmt.Sprintln("Unable to find the UUID of", srcObjName, srcObjKey, err))
+		return "", "", "", errors.New(fmt.Sprintln("Unable to find the UUID of", srcObjName, srcObjKey, err))
 	}
-	return FaultObjKey(fmt.Sprintf("%s#%s#%s", srcObjName, key, srcObjUUID)), err
+	return FaultObjKey(fmt.Sprintf("%s#%s#%s", srcObjName, objKey, srcObjUUID)), srcObjUUID, objKey, err
 }
 
-func getObjKey(srcObjName string, srcObjKey string) (str string) {
-	str = srcObjName
-	keyVal := strings.Split(srcObjKey, " ")
-	for _, kv := range keyVal {
-		val := strings.Split(strings.TrimSpace(kv), ":")[1]
-		str = str + "#" + val
-	}
-	return str
-}
-
-func (fMgr *FaultManager) getUUID(srcObjName, srcObjKey string) (uuid string, err error) {
-	objKey := getObjKey(srcObjName, srcObjKey)
-	return fMgr.dbHdl.GetUUIDFromObjKey(objKey)
+func (fMgr *FaultManager) getUUID(srcObjName, dbObjKey string) (uuid string, err error) {
+	return fMgr.dbHdl.GetUUIDFromObjKey(dbObjKey)
 }
 
 func getResolutionReason(reason Reason) string {
@@ -66,4 +60,12 @@ func getResolutionReason(reason Reason) string {
 		return "Cleared because of FaultClear Action"
 	}
 	return "Unknown"
+}
+
+func getEventObjKey(ownerName, srcObjName string, srcObjKey interface{}) (objKey string, dbObjKey string, err error) {
+	objKeyMap, _ := events.EventKeyMap[strings.ToUpper(ownerName)]
+	obj, _ := objKeyMap[srcObjName]
+	bytes, _ := json.Marshal(srcObjKey)
+
+	return obj.GetObjDBKey(bytes)
 }

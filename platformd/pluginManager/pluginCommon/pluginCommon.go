@@ -67,3 +67,59 @@ const (
 	FAN_STATUS_FAILED_STR         = "FAILED"
 	FAN_STATUS_NORMAL_STR         = "NORMAL"
 )
+
+type FanSensorData struct {
+	Value int32
+}
+
+type TemperatureSensorData struct {
+	Value float64
+}
+
+type VoltageSensorData struct {
+	Value float64
+}
+
+type PowerConverterSensorData struct {
+	Value float64
+}
+
+type SensorState struct {
+	FanSensor            map[string]FanSensorData
+	TemperatureSensor    map[string]TemperatureSensorData
+	VoltageSensor        map[string]VoltageSensorData
+	PowerConverterSensor map[string]PowerConverterSensorData
+}
+
+type QsfpState struct {
+	VendorName         string
+	VendorOUI          string
+	VendorPartNumber   string
+	VendorRevision     string
+	VendorSerialNumber string
+	DataCode           string
+	Temperature        float64
+	Voltage            float64
+	RX1Power           float64
+	RX2Power           float64
+	RX3Power           float64
+	RX4Power           float64
+	TX1Power           float64
+	TX2Power           float64
+	TX3Power           float64
+	TX4Power           float64
+	TX1Bias            float64
+	TX2Bias            float64
+	TX3Bias            float64
+	TX4Bias            float64
+}
+
+type PlatformMgmtDeviceState struct {
+	DeviceName  string
+	Uptime      string
+	Description string
+	ResetReason string
+	MemoryUsage string
+	Version     string
+	CPUUsage    string
+}

@@ -27,7 +27,6 @@ import (
 	"encoding/json"
 	"errors"
 	"infra/fMgrd/objects"
-	"strings"
 	"time"
 	"utils/eventUtils"
 )
@@ -123,15 +122,12 @@ func (fMgr *FaultManager) StartAlarmTimer(evt eventUtils.Event) *time.Timer {
 		}
 
 		aDataMapEnt, _ := fMgr.AlarmMap[evtKey]
-		fObjKey, err := fMgr.generateFaultObjKey(evt.SrcObjName, evt.SrcObjKey)
+		fObjKey, fObjKeyUUId, objKey, err := fMgr.generateFaultObjKey(evt.OwnerName, evt.SrcObjName, evt.SrcObjKey)
 		if err != nil {
 			fMgr.logger.Err("Fault Obj key, hence skipping alarm generation")
 			fMgr.AMapRWMutex.Unlock()
 			return
 		}
-		str := strings.Split(string(fObjKey), "#")
-		fObjKeyUUId := str[2]
-		objKey := str[1]
 
 		aDataEnt, exist := aDataMapEnt[fObjKey]
 		if exist {
@@ -184,7 +180,7 @@ func (fMgr *FaultManager) StartAlarmRemoveTimer(evt eventUtils.Event, reason Rea
 		EventId:  cFEnt.FaultEventId,
 	}
 
-	fObjKey, err := fMgr.generateFaultObjKey(evt.SrcObjName, evt.SrcObjKey)
+	fObjKey, _, _, err := fMgr.generateFaultObjKey(evt.OwnerName, evt.SrcObjName, evt.SrcObjKey)
 	if err != nil {
 		fMgr.logger.Err("Error generating fault object key")
 		return nil

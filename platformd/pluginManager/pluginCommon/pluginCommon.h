@@ -82,5 +82,49 @@ typedef struct sfp_info {
    char eeprom[256];
 } sfp_info_t;
 
+typedef struct qsfp_info_s {
+        float   Temperature;
+        float   SupplyVoltage;
+        float   RX1Power;
+        float   RX2Power;
+        float   RX3Power;
+        float   RX4Power;
+        float   TX1Bias;
+        float   TX2Bias;
+        float   TX3Bias; 
+        float   TX4Bias;
+        float   TX1Power;
+        float   TX2Power;
+        float   TX3Power;
+        float   TX4Power;
+        float   TempHighAlarm;
+        float   TempLowAlarm;
+        float   TempHighWarning;
+        float   TempLowWarning;
+        float   VccHighAlarm;
+        float   VccLowAlarm;
+        float VccHighWarning;
+        float VccLowWarning;
+        float RXPowerHighAlarm;
+        float RXPowerLowAlarm;
+        float RXPowerHighWarning;
+        float RXPowerLowWarning;
+        float TXBiasHighAlarm;
+        float TXBiasLowAlarm;
+        float TXBiasHighWarning;
+        float TXBiasLowWarning;
+        float TXPowerHighAlarm;
+        float TXPowerLowAlarm;
+        float TXPowerHighWarning;
+        float TXPowerLowWarning;
+        char VendorName[20];
+        char VendorOUI [10];
+        char VendorPN[20]; 
+        char VendorRev[3];
+        char VendorSN[20];
+        char DataCode[10];
+} qsfp_info_t;
+
+
 
 #endif // PLUGINCOMMON_H

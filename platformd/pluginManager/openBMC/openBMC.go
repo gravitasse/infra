@@ -23,6 +23,7 @@
 package openBMC
 
 import (
+	"errors"
 	"fmt"
 	"infra/platformd/objects"
 	"infra/platformd/pluginManager/pluginCommon"
@@ -293,4 +294,21 @@ func (driver *openBMCDriver) GetThermalState(thermalId int32) (pluginCommon.Ther
 	state.UpperWatermarkTemperature = "Not Supported"
 	state.ShutdownTemperature = "Not Supported"
 	return state, nil
+}
+
+func (driver *openBMCDriver) GetAllSensorState(state *pluginCommon.SensorState) error {
+	return errors.New("Not supported")
+}
+
+func (driver *openBMCDriver) GetQsfpState(Id int32) (retObj pluginCommon.QsfpState, err error) {
+	return retObj, nil
+}
+
+func (driver *openBMCDriver) GetMaxNumOfQsfp() int {
+	driver.logger.Info("Inside Dummy: GetMaxNumOfQsfps()")
+	return 0
+}
+
+func (driver *openBMCDriver) GetPlatformMgmtDeviceState(state *pluginCommon.PlatformMgmtDeviceState) error {
+	return errors.New("Not supported")
 }

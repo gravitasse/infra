@@ -21,41 +21,33 @@
 // |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__|
 //
 
-package objects
+package server
 
-type FaultState struct {
-	OwnerId          int32
-	EventId          int32
-	OwnerName        string
-	EventName        string
-	SrcObjName       string
-	Description      string
-	OccuranceTime    string
-	SrcObjKey        string
-	SrcObjUUID       string
-	ResolutionTime   string
-	ResolutionReason string
-}
-
-type FaultStateGetInfo struct {
-	EndIdx int
-	Count  int
-	More   bool
-	List   []FaultState
-}
-
-const (
-	ALL_EVENTS = "all"
+import (
+	"infra/platformd/objects"
 )
 
-type FaultEnable struct {
-	OwnerName string
-	EventName string
-	Enable    bool
+func (svr *PlatformdServer) getTemperatureSensorState(Name string) (*objects.TemperatureSensorState, error) {
+	retObj, err := svr.pluginMgr.GetTemperatureSensorState(Name)
+	return retObj, err
 }
 
-type FaultClear struct {
-	OwnerName  string
-	EventName  string
-	SrcObjUUID string
+func (svr *PlatformdServer) getBulkTemperatureSensorState(fromIdx int, count int) (*objects.TemperatureSensorStateGetInfo, error) {
+	retObj, err := svr.pluginMgr.GetBulkTemperatureSensorState(fromIdx, count)
+	return retObj, err
+}
+
+func (svr *PlatformdServer) getBulkTemperatureSensorConfig(fromIdx int, count int) (*objects.TemperatureSensorConfigGetInfo, error) {
+	retObj, err := svr.pluginMgr.GetBulkTemperatureSensorConfig(fromIdx, count)
+	return retObj, err
+}
+
+func (svr *PlatformdServer) updateTemperatureSensorConfig(oldCfg *objects.TemperatureSensorConfig, newCfg *objects.TemperatureSensorConfig, attrset []bool) (bool, error) {
+	ret, err := svr.pluginMgr.UpdateTemperatureSensorConfig(oldCfg, newCfg, attrset)
+	return ret, err
+}
+
+func (svr *PlatformdServer) getTempSensorPMState(Name string, Class string) (*objects.TemperatureSensorPMState, error) {
+	retObj, err := svr.pluginMgr.GetTempSensorPMState(Name, Class)
+	return retObj, err
 }

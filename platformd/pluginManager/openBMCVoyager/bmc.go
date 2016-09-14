@@ -1,4 +1,3 @@
-//
 //Copyright [2016] [SnapRoute Inc]
 //
 //Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,41 +20,62 @@
 // |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__|
 //
 
-package objects
+package openBMCVoyager
 
-type FaultState struct {
-	OwnerId          int32
-	EventId          int32
-	OwnerName        string
-	EventName        string
-	SrcObjName       string
-	Description      string
-	OccuranceTime    string
-	SrcObjKey        string
-	SrcObjUUID       string
-	ResolutionTime   string
-	ResolutionReason string
-}
-
-type FaultStateGetInfo struct {
-	EndIdx int
-	Count  int
-	More   bool
-	List   []FaultState
-}
-
-const (
-	ALL_EVENTS = "all"
+/*
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	//"io/ioutil"
+	"net/http"
+	//"strconv"
+	//"strings"
 )
 
-type FaultEnable struct {
-	OwnerName string
-	EventName string
-	Enable    bool
+type BMCResource []string
+type BMCActions []string
+
+type BMC struct {
+	Info      BMCInfo     `json:"Information"`
+	Resources BMCResource `json:"Resources"`
+	Actions   BMCActions  `json:"Actions"`
 }
 
-type FaultClear struct {
-	OwnerName  string
-	EventName  string
-	SrcObjUUID string
+type BMCInfo struct {
+	Uptime         string `json:"Uptime"`
+	Description    string `json:"Description"`
+	ResetReson     string `json:"Reset Reason"`
+	MemoryUsage    string `json:"Memory Usage"`
+	OpenBMCVersion string `json:"OpenBMC Version"`
+	CPUUsage       string `json:"CPU Usage"`
 }
+
+func (driver *openBMCDriver) GetBMCInfo() (info BMCInfo, err error) {
+	var jsonStr = []byte(nil)
+	url := "http://" + driver.ipAddr + ":" + driver.port + "/api/sys/bmc"
+	//fmt.Println("URL:>", url)
+	req, err := http.NewRequest("GET", url, bytes.NewBuffer(jsonStr))
+	if err != nil {
+		return info, err
+	}
+	req.Header.Set("Accept", "application/json")
+	body, err := SendHttpCmd(req)
+	if err != nil {
+		return info, err
+	}
+	return extractBMCData(body)
+}
+
+func extractBMCData(body []byte) (data BMCInfo, err error) {
+	var bmc BMC
+
+	err = json.Unmarshal(body, &bmc)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return data, err
+	}
+
+	return bmc.Info, err
+}
+*/

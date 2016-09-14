@@ -29,8 +29,10 @@ import (
 	"infra/platformd/pluginManager/dummy"
 	"infra/platformd/pluginManager/onlp"
 	"infra/platformd/pluginManager/openBMC"
+	"infra/platformd/pluginManager/openBMCVoyager"
 	"infra/platformd/pluginManager/pluginCommon"
 	"strings"
+	"utils/dbutils"
 	"utils/logging"
 )
 
@@ -50,6 +52,10 @@ type PluginIntf interface {
 	GetPlatformState() (pluginCommon.PlatformState, error)
 	GetThermalState(thermalId int32) (pluginCommon.ThermalState, error)
 	GetMaxNumOfThermal() int
+	GetAllSensorState(state *pluginCommon.SensorState) error
+	GetMaxNumOfQsfp() int
+	GetQsfpState(id int32) (pluginCommon.QsfpState, error)
+	GetPlatformMgmtDeviceState(state *pluginCommon.PlatformMgmtDeviceState) error
 }
 
 type ResourceManagers struct {
@@ -59,12 +65,16 @@ type ResourceManagers struct {
 	*SfpManager
 	*ThermalManager
 	*LedManager
+	*SensorManager
+	*QsfpManager
+	*PlatformManager
 }
 
 type PluginManager struct {
 	*ResourceManagers
-	logger logging.LoggerIntf
-	plugin PluginIntf
+	logger     logging.LoggerIntf
+	plugin     PluginIntf
+	EventDbHdl dbutils.DBIntf
 }
 
 func NewPluginMgr(initParams *pluginCommon.PluginInitParams) (*PluginManager, error) {
@@ -73,6 +83,7 @@ func NewPluginMgr(initParams *pluginCommon.PluginInitParams) (*PluginManager, er
 	pluginMgr := new(PluginManager)
 	pluginMgr.ResourceManagers = new(ResourceManagers)
 	pluginMgr.logger = initParams.Logger
+	pluginMgr.EventDbHdl = initParams.EventDbHdl
 	pluginName := strings.ToLower(initParams.PluginName)
 	switch pluginName {
 	case pluginCommon.ONLP_PLUGIN:
@@ -85,6 +96,13 @@ func NewPluginMgr(initParams *pluginCommon.PluginInitParams) (*PluginManager, er
 	case pluginCommon.OpenBMC_PLUGIN:
 		fmt.Println("===== OPENBMC_PLUGIN =====")
 		plugin, err = openBMC.NewOpenBMCPlugin(initParams)
+		if err != nil {
+			return nil, err
+		}
+		pluginMgr.plugin = plugin
+	case pluginCommon.OpenBMCVoyager_PLUGIN:
+		fmt.Println("===== OPENBMCVOYAGER_PLUGIN =====")
+		plugin, err = openBMCVoyager.NewOpenBMCVoyagerPlugin(initParams)
 		if err != nil {
 			return nil, err
 		}
@@ -104,6 +122,9 @@ func NewPluginMgr(initParams *pluginCommon.PluginInitParams) (*PluginManager, er
 	pluginMgr.SfpManager = &SfpMgr
 	pluginMgr.ThermalManager = &ThermalMgr
 	pluginMgr.LedManager = &LedMgr
+	pluginMgr.SensorManager = &SensorMgr
+	pluginMgr.QsfpManager = &QsfpMgr
+	pluginMgr.PlatformManager = &PlatformMgr
 	return pluginMgr, nil
 }
 
@@ -115,6 +136,9 @@ func (pMgr *PluginManager) Init() error {
 	pMgr.SfpManager.Init(pMgr.logger, pMgr.plugin)
 	pMgr.ThermalManager.Init(pMgr.logger, pMgr.plugin)
 	pMgr.LedManager.Init(pMgr.logger, pMgr.plugin)
+	pMgr.SensorManager.Init(pMgr.logger, pMgr.plugin, pMgr.EventDbHdl)
+	pMgr.QsfpManager.Init(pMgr.logger, pMgr.plugin)
+	pMgr.PlatformManager.Init(pMgr.logger, pMgr.plugin)
 	return nil
 }
 
@@ -125,4 +149,7 @@ func (pMgr *PluginManager) Deinit() {
 	pMgr.SfpManager.Deinit()
 	pMgr.ThermalManager.Deinit()
 	pMgr.LedManager.Deinit()
+	pMgr.SensorManager.Deinit()
+	pMgr.QsfpManager.Deinit()
+	pMgr.PlatformManager.Deinit()
 }

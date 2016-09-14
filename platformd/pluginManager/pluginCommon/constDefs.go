@@ -24,14 +24,16 @@
 package pluginCommon
 
 import (
+	"utils/dbutils"
 	"utils/logging"
 )
 
 //Plugin name constants
 const (
-	ONLP_PLUGIN    = "onlp"
-	OpenBMC_PLUGIN = "openbmc"
-	Dummy_PLUGIN   = "dummy"
+	ONLP_PLUGIN           = "onlp"
+	OpenBMC_PLUGIN        = "openbmc"
+	OpenBMCVoyager_PLUGIN = "openbmcvoyager"
+	Dummy_PLUGIN          = "dummy"
 )
 
 type PluginInitParams struct {
@@ -39,6 +41,7 @@ type PluginInitParams struct {
 	PluginName string
 	IpAddr     string
 	Port       string
+	EventDbHdl dbutils.DBIntf
 }
 
 type FanState struct {

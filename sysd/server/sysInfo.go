@@ -24,7 +24,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"infra/sysd/sysdCommonDefs"
 	"models/objects"
 	"os/exec"
@@ -45,7 +44,7 @@ func (svr *SYSDServer) ReadSystemInfoFromDB() error {
 			svr.logger.Err("DB query failed for System Info")
 			return err
 		}
-		svr.logger.Info(fmt.Sprintln("Total System Entries are", len(objList)))
+		svr.logger.Info("Total System Entries are", len(objList))
 		for idx := 0; idx < len(objList); idx++ {
 			dbObject := objList[idx].(objects.SystemParam)
 			svr.SysInfo.SwitchMac = dbObject.SwitchMac
@@ -123,14 +122,16 @@ func (svr *SYSDServer) UpdateSystemInfo(updateInfo *SystemParamUpdate) {
 		case "Hostname":
 			binary, lookErr := exec.LookPath("hostname")
 			if lookErr != nil {
-				svr.logger.Err(fmt.Sprintln("Error searching path for hostname", lookErr))
+				svr.logger.Err("Error searching path for hostname", lookErr)
 				continue
 			}
 			cmd := exec.Command(binary, updateInfo.NewCfg.Hostname)
 			err := cmd.Run()
 			if err != nil {
-				svr.logger.Err(fmt.Sprintln("Updating hostname in linux failed", err))
+				svr.logger.Err("Updating hostname in linux failed", err)
 			}
+		case "Description":
+			svr.SysInfo.Description = updateInfo.NewCfg.Description
 		}
 	}
 }

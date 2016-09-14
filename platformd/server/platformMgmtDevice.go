@@ -21,41 +21,18 @@
 // |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__|
 //
 
-package objects
+package server
 
-type FaultState struct {
-	OwnerId          int32
-	EventId          int32
-	OwnerName        string
-	EventName        string
-	SrcObjName       string
-	Description      string
-	OccuranceTime    string
-	SrcObjKey        string
-	SrcObjUUID       string
-	ResolutionTime   string
-	ResolutionReason string
-}
-
-type FaultStateGetInfo struct {
-	EndIdx int
-	Count  int
-	More   bool
-	List   []FaultState
-}
-
-const (
-	ALL_EVENTS = "all"
+import (
+	"infra/platformd/objects"
 )
 
-type FaultEnable struct {
-	OwnerName string
-	EventName string
-	Enable    bool
+func (svr *PlatformdServer) getPlatformMgmtDeviceState(Name string) (retObj *objects.PlatformMgmtDeviceState, err error) {
+	retObj, err = svr.pluginMgr.GetPlatformMgmtDeviceState(Name)
+	return retObj, err
 }
 
-type FaultClear struct {
-	OwnerName  string
-	EventName  string
-	SrcObjUUID string
+func (svr *PlatformdServer) getBulkPlatformMgmtDeviceState(fromIdx int, count int) (retObj *objects.PlatformMgmtDeviceStateGetInfo, err error) {
+	retObj, err = svr.pluginMgr.GetBulkPlatformMgmtDeviceState(fromIdx, count)
+	return retObj, err
 }

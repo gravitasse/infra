@@ -21,41 +21,34 @@
 // |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__|
 //
 
-package objects
+package server
 
-type FaultState struct {
-	OwnerId          int32
-	EventId          int32
-	OwnerName        string
-	EventName        string
-	SrcObjName       string
-	Description      string
-	OccuranceTime    string
-	SrcObjKey        string
-	SrcObjUUID       string
-	ResolutionTime   string
-	ResolutionReason string
-}
-
-type FaultStateGetInfo struct {
-	EndIdx int
-	Count  int
-	More   bool
-	List   []FaultState
-}
-
-const (
-	ALL_EVENTS = "all"
+import (
+	"infra/platformd/objects"
 )
 
-type FaultEnable struct {
-	OwnerName string
-	EventName string
-	Enable    bool
+func (svr *PlatformdServer) getFanSensorState(Name string) (*objects.FanSensorState, error) {
+	retObj, err := svr.pluginMgr.GetFanSensorState(Name)
+	return retObj, err
 }
 
-type FaultClear struct {
-	OwnerName  string
-	EventName  string
-	SrcObjUUID string
+func (svr *PlatformdServer) getBulkFanSensorState(fromIdx int, count int) (*objects.FanSensorStateGetInfo, error) {
+	retObj, err := svr.pluginMgr.GetBulkFanSensorState(fromIdx, count)
+	svr.Logger.Info("Fan State:", retObj)
+	return retObj, err
+}
+
+func (svr *PlatformdServer) getBulkFanSensorConfig(fromIdx int, count int) (*objects.FanSensorConfigGetInfo, error) {
+	retObj, err := svr.pluginMgr.GetBulkFanSensorConfig(fromIdx, count)
+	return retObj, err
+}
+
+func (svr *PlatformdServer) updateFanSensorConfig(oldCfg *objects.FanSensorConfig, newCfg *objects.FanSensorConfig, attrset []bool) (bool, error) {
+	ret, err := svr.pluginMgr.UpdateFanSensorConfig(oldCfg, newCfg, attrset)
+	return ret, err
+}
+
+func (svr *PlatformdServer) getFanSensorPMState(Name string, Class string) (*objects.FanSensorPMState, error) {
+	retObj, err := svr.pluginMgr.GetFanSensorPMState(Name, Class)
+	return retObj, err
 }

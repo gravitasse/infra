@@ -21,41 +21,33 @@
 // |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__|
 //
 
-package objects
+package server
 
-type FaultState struct {
-	OwnerId          int32
-	EventId          int32
-	OwnerName        string
-	EventName        string
-	SrcObjName       string
-	Description      string
-	OccuranceTime    string
-	SrcObjKey        string
-	SrcObjUUID       string
-	ResolutionTime   string
-	ResolutionReason string
-}
-
-type FaultStateGetInfo struct {
-	EndIdx int
-	Count  int
-	More   bool
-	List   []FaultState
-}
-
-const (
-	ALL_EVENTS = "all"
+import (
+	"infra/platformd/objects"
 )
 
-type FaultEnable struct {
-	OwnerName string
-	EventName string
-	Enable    bool
+func (svr *PlatformdServer) getVoltageSensorState(Name string) (*objects.VoltageSensorState, error) {
+	retObj, err := svr.pluginMgr.GetVoltageSensorState(Name)
+	return retObj, err
 }
 
-type FaultClear struct {
-	OwnerName  string
-	EventName  string
-	SrcObjUUID string
+func (svr *PlatformdServer) getBulkVoltageSensorState(fromIdx int, count int) (*objects.VoltageSensorStateGetInfo, error) {
+	retObj, err := svr.pluginMgr.GetBulkVoltageSensorState(fromIdx, count)
+	return retObj, err
+}
+
+func (svr *PlatformdServer) getBulkVoltageSensorConfig(fromIdx int, count int) (*objects.VoltageSensorConfigGetInfo, error) {
+	retObj, err := svr.pluginMgr.GetBulkVoltageSensorConfig(fromIdx, count)
+	return retObj, err
+}
+
+func (svr *PlatformdServer) updateVoltageSensorConfig(oldCfg *objects.VoltageSensorConfig, newCfg *objects.VoltageSensorConfig, attrset []bool) (bool, error) {
+	ret, err := svr.pluginMgr.UpdateVoltageSensorConfig(oldCfg, newCfg, attrset)
+	return ret, err
+}
+
+func (svr *PlatformdServer) getVoltageSensorPMState(Name string, Class string) (*objects.VoltageSensorPMState, error) {
+	retObj, err := svr.pluginMgr.GetVoltageSensorPMState(Name, Class)
+	return retObj, err
 }

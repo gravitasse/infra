@@ -25,7 +25,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	nanomsg "github.com/op/go-nanomsg"
 	"infra/sysd/iptables"
 	"infra/sysd/sysdCommonDefs"
@@ -105,7 +104,7 @@ func NewSYSDServer(logger *logging.Writer, dbHdl *dbutils.DBUtil, paramsDir stri
 }
 
 func (server *SYSDServer) SigHandler(dbHdl *dbutils.DBUtil) {
-	server.logger.Info(fmt.Sprintln("Starting SigHandler"))
+	server.logger.Info("Starting SigHandler")
 	sigChan := make(chan os.Signal, 1)
 	signalList := []os.Signal{syscall.SIGHUP}
 	signal.Notify(sigChan, signalList...)
@@ -119,31 +118,31 @@ func (server *SYSDServer) SigHandler(dbHdl *dbutils.DBUtil) {
 				dbHdl.Disconnect()
 				os.Exit(0)
 			default:
-				server.logger.Info(fmt.Sprintln("Unhandled signal : ", signal))
+				server.logger.Info("Unhandled signal : ", signal)
 			}
 		}
 	}
 }
 
 func (server *SYSDServer) InitServer() {
-	server.logger.Info(fmt.Sprintln("Initializing Sysd Server"))
+	server.logger.Info("Initializing Sysd Server")
 }
 
 func (server *SYSDServer) InitPublisher(pub_str string) (pub *nanomsg.PubSocket) {
-	server.logger.Info(fmt.Sprintln("Setting up ", pub_str, "publisher"))
+	server.logger.Info("Setting up ", pub_str, "publisher")
 	pub, err := nanomsg.NewPubSocket()
 	if err != nil {
-		server.logger.Info(fmt.Sprintln("Failed to open pub socket"))
+		server.logger.Info("Failed to open pub socket")
 		return nil
 	}
 	ep, err := pub.Bind(pub_str)
 	if err != nil {
-		server.logger.Info(fmt.Sprintln("Failed to bind pub socket - ", ep))
+		server.logger.Info("Failed to bind pub socket - ", ep)
 		return nil
 	}
 	err = pub.SetSendBuffer(1024)
 	if err != nil {
-		server.logger.Info(fmt.Sprintln("Failed to set send buffer size"))
+		server.logger.Info("Failed to set send buffer size")
 		return nil
 	}
 	return pub
@@ -156,7 +155,7 @@ func (server *SYSDServer) PublishSysdNotifications() {
 		case event := <-server.notificationCh:
 			_, err := server.sysdPubSocket.Send(event, nanomsg.DontWait)
 			if err == syscall.EAGAIN {
-				server.logger.Err(fmt.Sprintln("Failed to publish event"))
+				server.logger.Err("Failed to publish event")
 			}
 		}
 	}
@@ -223,12 +222,10 @@ func (server *SYSDServer) StartServer() {
 	for {
 		select {
 		case gLogConf := <-server.GlobalLoggingConfigCh:
-			server.logger.Info(fmt.Sprintln("Received call for performing Global logging Configuration",
-				gLogConf))
+			server.logger.Info("Received call for performing Global logging Configuration", gLogConf)
 			server.ProcessGlobalLoggingConfig(gLogConf)
 		case compLogConf := <-server.ComponentLoggingConfigCh:
-			server.logger.Info(fmt.Sprintln("Received call for performing Component logging Configuration",
-				compLogConf))
+			server.logger.Info("Received call for performing Component logging Configuration", compLogConf)
 			server.ProcessComponentLoggingConfig(compLogConf)
 		case addConfig := <-server.IptableAddCh:
 			server.sysdIpTableMgr.AddIpRule(addConfig, false /*non-restart*/)

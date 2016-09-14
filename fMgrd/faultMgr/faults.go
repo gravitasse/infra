@@ -28,7 +28,6 @@ import (
 	"errors"
 	"fmt"
 	"infra/fMgrd/objects"
-	"strings"
 	"time"
 	"utils/eventUtils"
 )
@@ -178,15 +177,11 @@ func (fMgr *FaultManager) CreateEntryInFaultAlarmDB(evt eventUtils.Event) error 
 	}
 
 	fDataMapEnt, _ := fMgr.FaultMap[evtKey]
-	fObjKey, err := fMgr.generateFaultObjKey(evt.SrcObjName, evt.SrcObjKey)
+	fObjKey, fObjKeyUUId, objKey, err := fMgr.generateFaultObjKey(evt.OwnerName, evt.SrcObjName, evt.SrcObjKey)
 	if err != nil {
 		fMgr.FMapRWMutex.Unlock()
 		return errors.New("Error generating fault object key")
 	}
-
-	str := strings.Split(string(fObjKey), "#")
-	fObjKeyUUId := str[2]
-	objKey := str[1]
 
 	fDataEnt, exist := fDataMapEnt[fObjKey]
 	if exist {
@@ -257,7 +252,7 @@ func (fMgr *FaultManager) DeleteEntryFromFaultAlarmDB(evt eventUtils.Event) erro
 	} else {
 		return errors.New("Unbale to find the corresponding fault Event")
 	}
-	fObjKey, err := fMgr.generateFaultObjKey(evt.SrcObjName, evt.SrcObjKey)
+	fObjKey, _, _, err := fMgr.generateFaultObjKey(evt.OwnerName, evt.SrcObjName, evt.SrcObjKey)
 	if err != nil {
 		return errors.New("Error generating fault object key")
 	}
