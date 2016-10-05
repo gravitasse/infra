@@ -80,6 +80,7 @@ func (server *FMGRServer) Subscriber() {
 			}
 		case error:
 			server.Logger.Err(fmt.Sprintf("error: %v\n", n))
+			return
 		}
 	}
 	server.subHdl.Unsubscribe()

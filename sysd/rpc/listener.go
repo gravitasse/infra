@@ -48,20 +48,6 @@ func NewSYSDHandler(logger *logging.Writer, server *server.SYSDServer) *SYSDHand
 	return h
 }
 
-func (h *SYSDHandler) SendGlobalLoggingConfig(gLoggingConfig *sysd.SystemLogging) bool {
-	var Logging bool
-	if gLoggingConfig.Logging == "on" {
-		Logging = true
-	} else {
-		Logging = false
-	}
-	gConf := server.GlobalLoggingConfig{
-		Enable: Logging,
-	}
-	h.server.GlobalLoggingConfigCh <- gConf
-	return true
-}
-
 func (h *SYSDHandler) SendComponentLoggingConfig(cLoggingConfig *sysd.ComponentLogging) bool {
 	cConf := server.ComponentLoggingConfig{
 		Component: cLoggingConfig.Module,
@@ -69,16 +55,6 @@ func (h *SYSDHandler) SendComponentLoggingConfig(cLoggingConfig *sysd.ComponentL
 	}
 	h.server.ComponentLoggingConfigCh <- cConf
 	return true
-}
-
-func (h *SYSDHandler) UpdateSystemLogging(origConf *sysd.SystemLogging, newConf *sysd.SystemLogging, attrset []bool, op []*sysd.PatchOpInfo) (bool, error) {
-	h.logger.Info("Original global config attrs:", origConf)
-	if newConf == nil {
-		err := errors.New("Invalid global Configuration")
-		return false, err
-	}
-	h.logger.Info("Update global config attrs:", newConf)
-	return h.SendGlobalLoggingConfig(newConf), nil
 }
 
 func (h *SYSDHandler) UpdateComponentLogging(origConf *sysd.ComponentLogging, newConf *sysd.ComponentLogging, attrset []bool, op []*sysd.PatchOpInfo) (bool, error) {
@@ -91,20 +67,9 @@ func (h *SYSDHandler) UpdateComponentLogging(origConf *sysd.ComponentLogging, ne
 	return h.SendComponentLoggingConfig(newConf), nil
 }
 
-func (h *SYSDHandler) CreateSystemLogging(gLoggingConf *sysd.SystemLogging) (bool, error) {
-	h.logger.Info("Create global config attrs:", gLoggingConf)
-	return h.SendGlobalLoggingConfig(gLoggingConf), nil
-}
-
 func (h *SYSDHandler) CreateComponentLogging(cLoggingConf *sysd.ComponentLogging) (bool, error) {
 	h.logger.Info("Create component config attrs:", cLoggingConf)
 	return h.SendComponentLoggingConfig(cLoggingConf), nil
-}
-
-func (h *SYSDHandler) DeleteSystemLogging(gLoggingConf *sysd.SystemLogging) (bool, error) {
-	h.logger.Info("Delete global config attrs:", gLoggingConf)
-	err := errors.New("SystemLogging delete not supported")
-	return false, err
 }
 
 func (h *SYSDHandler) DeleteComponentLogging(cLoggingConf *sysd.ComponentLogging) (bool, error) {
@@ -142,6 +107,15 @@ func (h *SYSDHandler) ExecuteActionDaemon(daemonConfig *sysd.Daemon) (bool, erro
 	return true, nil
 }
 
+func (h *SYSDHandler) ExecuteActionGlobalLogging(gLogConfig *sysd.GlobalLogging) (bool, error) {
+	h.logger.Info("GlobalLogging action attrs: ", gLogConfig)
+	gConf := server.GlobalLoggingConfig{
+		Level: logging.ConvertLevelStrToVal(gLogConfig.Level),
+	}
+	h.server.GlobalLoggingConfigCh <- gConf
+	return true, nil
+}
+
 func (h *SYSDHandler) GetDaemonState(name string) (*sysd.DaemonState, error) {
 	h.logger.Info("Get Daemon state ", name)
 	daemonStateResponse := sysd.NewDaemonState()
@@ -174,7 +148,7 @@ func (h *SYSDHandler) GetBulkDaemonState(fromIdx sysd.Int, count sysd.Int) (*sys
 func convertSystemParamThriftToModel(cfg *sysd.SystemParam) objects.SystemParam {
 	confg := objects.SystemParam{
 		Description: cfg.Description,
-		Version:     cfg.Version,
+		SwVersion:   cfg.SwVersion,
 		MgmtIp:      cfg.MgmtIp,
 		Hostname:    cfg.Hostname,
 		SwitchMac:   cfg.SwitchMac,
@@ -241,6 +215,7 @@ func (h *SYSDHandler) UpdateSystemParam(org *sysd.SystemParam, new *sysd.SystemP
 	}
 	entriesUpdated, err := h.validatUpdateSystemParam(new, attrset)
 	if err != nil {
+		h.logger.Err("Failed to update system params:", err)
 		return false, err
 	}
 	cfg := convertSystemParamThriftToModel(new)
@@ -249,6 +224,7 @@ func (h *SYSDHandler) UpdateSystemParam(org *sysd.SystemParam, new *sysd.SystemP
 		NewCfg:         &cfg,
 	}
 	h.server.SysUpdCh <- &updInfo
+	h.logger.Info("Returning true from update system param information")
 	return true, nil
 }
 
@@ -260,9 +236,11 @@ func convertSystemParamStateToThrift(info objects.SystemParamState, entry *sysd.
 	entry.Vrf = string(info.Vrf)
 	entry.SwitchMac = string(info.SwitchMac)
 	entry.MgmtIp = string(info.MgmtIp)
-	entry.Version = string(info.Version)
+	entry.SwVersion = string(info.SwVersion)
 	entry.Description = string(info.Description)
 	entry.Hostname = string(info.Hostname)
+	entry.Distro = string(info.Distro)
+	entry.Kernel = string(info.Kernel)
 }
 
 func (h *SYSDHandler) GetSystemParamState(name string) (*sysd.SystemParamState, error) {

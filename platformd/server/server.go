@@ -97,7 +97,7 @@ func (svr *PlatformdServer) initServer() error {
 }
 
 func (svr *PlatformdServer) handleRPCRequest(req *ServerRequest) {
-	//svr.Logger.Info(fmt.Sprintln("Calling handle RPC Request for:", *req))
+	svr.Logger.Info(fmt.Sprintln("Calling handle RPC Request for:", *req))
 	switch req.Op {
 	case GET_FAN_STATE:
 		var retObj GetFanStateOutArgs
@@ -149,13 +149,14 @@ func (svr *PlatformdServer) handleRPCRequest(req *ServerRequest) {
 		if val, ok := req.Data.(*GetPlatformStateInArgs); ok {
 			retObj.Obj, retObj.Err = svr.getPlatformState(val.ObjName)
 		}
-		//svr.Logger.Info(fmt.Sprintln("Server GET_PLATFORM_STATE request replying -", retObj))
+		svr.Logger.Info(fmt.Sprintln("Server GET_PLATFORM_STATE request replying -", retObj))
 		svr.ReplyChan <- interface{}(&retObj)
 	case GET_BULK_PLATFORM_STATE:
 		var retObj GetBulkPlatformStateOutArgs
 		if val, ok := req.Data.(*GetBulkInArgs); ok {
 			retObj.BulkInfo, retObj.Err = svr.getBulkPlatformState(val.FromIdx, val.Count)
 		}
+		svr.Logger.Info(fmt.Sprintln("Server GET BULK GET_PLATFORM_STATE request replying -", retObj))
 		svr.ReplyChan <- interface{}(&retObj)
 	case GET_THERMAL_STATE:
 		var retObj GetThermalStateOutArgs
@@ -295,6 +296,31 @@ func (svr *PlatformdServer) handleRPCRequest(req *ServerRequest) {
 			retObj.RetVal, retObj.Err = svr.updateQsfpConfig(val.QsfpOldCfg, val.QsfpNewCfg, val.AttrSet)
 		}
 		svr.ReplyChan <- interface{}(&retObj)
+	case GET_QSFP_CHANNEL_STATE:
+		var retObj GetQsfpChannelStateOutArgs
+		if val, ok := req.Data.(*GetQsfpChannelStateInArgs); ok {
+			retObj.Obj, retObj.Err = svr.getQsfpChannelState(val.QsfpId, val.ChannelNum)
+		}
+		//svr.Logger.Info(fmt.Sprintln("Server GET_QSFP_CHANNEL_STATE request replying -", retObj))
+		svr.ReplyChan <- interface{}(&retObj)
+	case GET_BULK_QSFP_CHANNEL_STATE:
+		var retObj GetBulkQsfpChannelStateOutArgs
+		if val, ok := req.Data.(*GetBulkInArgs); ok {
+			retObj.BulkInfo, retObj.Err = svr.getBulkQsfpChannelState(val.FromIdx, val.Count)
+		}
+		svr.ReplyChan <- interface{}(&retObj)
+	case GET_BULK_QSFP_CHANNEL_CONFIG:
+		var retObj GetBulkQsfpChannelConfigOutArgs
+		if val, ok := req.Data.(*GetBulkInArgs); ok {
+			retObj.BulkInfo, retObj.Err = svr.getBulkQsfpChannelConfig(val.FromIdx, val.Count)
+		}
+		svr.ReplyChan <- interface{}(&retObj)
+	case UPDATE_QSFP_CHANNEL_CONFIG:
+		var retObj UpdateConfigOutArgs
+		if val, ok := req.Data.(*UpdateQsfpChannelConfigInArgs); ok {
+			retObj.RetVal, retObj.Err = svr.updateQsfpChannelConfig(val.QsfpChannelOldCfg, val.QsfpChannelNewCfg, val.AttrSet)
+		}
+		svr.ReplyChan <- interface{}(&retObj)
 	case GET_PLATFORM_MGMT_DEVICE_STATE:
 		var retObj GetPlatformMgmtDeviceStateOutArgs
 		if val, ok := req.Data.(*GetPlatformMgmtDeviceStateInArgs); ok {
@@ -334,7 +360,44 @@ func (svr *PlatformdServer) handleRPCRequest(req *ServerRequest) {
 		if val, ok := req.Data.(*GetPowerConverterSensorPMStateInArgs); ok {
 			retObj.Obj, retObj.Err = svr.getPowerConverterSensorPMState(val.Name, val.Class)
 		}
-		//svr.Logger.Info(fmt.Sprintln("Server GET_POWER_CONVERTER_SENSOR_PM_STATE request replying -", retObj))
+		svr.ReplyChan <- interface{}(&retObj)
+	case GET_QSFP_PM_STATE:
+		var retObj GetQsfpPMStateOutArgs
+		if val, ok := req.Data.(*GetQsfpPMStateInArgs); ok {
+			retObj.Obj, retObj.Err = svr.getQsfpPMState(val.QsfpId, val.Resource, val.Class)
+		}
+		//svr.Logger.Info(fmt.Sprintln("Server GET_QSFP_PM_STATE request replying -", retObj))
+		svr.ReplyChan <- interface{}(&retObj)
+	case GET_QSFP_CHANNEL_PM_STATE:
+		var retObj GetQsfpChannelPMStateOutArgs
+		if val, ok := req.Data.(*GetQsfpChannelPMStateInArgs); ok {
+			retObj.Obj, retObj.Err = svr.getQsfpChannelPMState(val.QsfpId, val.ChannelNum, val.Resource, val.Class)
+		}
+		//svr.Logger.Info(fmt.Sprintln("Server GET_QSFP_CHANNEL_PM_STATE request replying -", retObj))
+		svr.ReplyChan <- interface{}(&retObj)
+	case GET_PSU_STATE:
+		var retObj GetPsuStateOutArgs
+		if val, ok := req.Data.(*GetPsuStateInArgs); ok {
+			retObj.Obj, retObj.Err = svr.getPsuState(val.PsuId)
+		}
+		svr.ReplyChan <- interface{}(&retObj)
+	case GET_BULK_PSU_STATE:
+		var retObj GetBulkPsuStateOutArgs
+		if val, ok := req.Data.(*GetBulkInArgs); ok {
+			retObj.BulkInfo, retObj.Err = svr.getBulkPsuState(val.FromIdx, val.Count)
+		}
+		svr.ReplyChan <- interface{}(&retObj)
+	case GET_LED_STATE:
+		var retObj GetLedStateOutArgs
+		if val, ok := req.Data.(*GetLedStateInArgs); ok {
+			retObj.Obj, retObj.Err = svr.getLedState(val.LedId)
+		}
+		svr.ReplyChan <- interface{}(&retObj)
+	case GET_BULK_LED_STATE:
+		var retObj GetBulkLedStateOutArgs
+		if val, ok := req.Data.(*GetBulkInArgs); ok {
+			retObj.BulkInfo, retObj.Err = svr.getBulkLedState(val.FromIdx, val.Count)
+		}
 		svr.ReplyChan <- interface{}(&retObj)
 	default:
 		svr.Logger.Err(fmt.Sprintln("Error : Server recevied unrecognized request - ", req.Op))

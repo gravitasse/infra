@@ -42,6 +42,9 @@ type PowerConverterSensorConfig struct {
 	HigherWarningThreshold float64
 	LowerWarningThreshold  float64
 	LowerAlarmThreshold    float64
+	PMClassAAdminState     string
+	PMClassBAdminState     string
+	PMClassCAdminState     string
 }
 
 type PowerConverterSensorConfigGetInfo struct {
@@ -57,6 +60,9 @@ const (
 	POWER_CONVERTER_SENSOR_UPDATE_HIGHER_WARN_THRESHOLD  = 0x4
 	POWER_CONVERTER_SENSOR_UPDATE_LOWER_WARN_THRESHOLD   = 0x8
 	POWER_CONVERTER_SENSOR_UPDATE_LOWER_ALARM_THRESHOLD  = 0x10
+	POWER_CONVERTER_SENSOR_UPDATE_PM_CLASS_A_ADMIN_STATE = 0x20
+	POWER_CONVERTER_SENSOR_UPDATE_PM_CLASS_B_ADMIN_STATE = 0x40
+	POWER_CONVERTER_SENSOR_UPDATE_PM_CLASS_C_ADMIN_STATE = 0x80
 )
 
 type PowerConverterSensorPMData struct {

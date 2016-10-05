@@ -39,22 +39,36 @@ import (
 type PluginIntf interface {
 	Init() error
 	DeInit() error
-	GetFanState(fanId int32) (pluginCommon.FanState, error)
-	GetFanConfig(fanId int32) (*objects.FanConfig, error)
-	UpdateFanConfig(cfg *objects.FanConfig) (bool, error)
-	GetMaxNumOfFans() int
-	GetAllFanState(state []pluginCommon.FanState, count int) error
+	GetPlatformState() (pluginCommon.PlatformState, error)
+
 	GetSfpState(sfpId int32) (pluginCommon.SfpState, error)
 	GetSfpConfig(sfpId int32) (*objects.SfpConfig, error)
 	UpdateSfpConfig(cfg *objects.SfpConfig) (bool, error)
 	GetAllSfpState(state []pluginCommon.SfpState, count int) error
 	GetSfpCnt() int
-	GetPlatformState() (pluginCommon.PlatformState, error)
+
 	GetThermalState(thermalId int32) (pluginCommon.ThermalState, error)
+	GetAllThermalState(state []pluginCommon.ThermalState, count int) error
 	GetMaxNumOfThermal() int
+
+	GetFanState(fanId int32) (pluginCommon.FanState, error)
+	GetFanConfig(fanId int32) (*objects.FanConfig, error)
+	UpdateFanConfig(cfg *objects.FanConfig) (bool, error)
+	GetMaxNumOfFans() int
+	GetAllFanState(state []pluginCommon.FanState, count int) error
+
+	GetPsuState(psuId int32) (pluginCommon.PsuState, error)
+	GetAllPsuState(state []pluginCommon.PsuState, count int) error
+	GetMaxNumOfPsu() int
+
+	GetLedState(ledId int32) (pluginCommon.LedState, error)
+	GetAllLedState(state []pluginCommon.LedState, count int) error
+	GetMaxNumOfLed() int
+
 	GetAllSensorState(state *pluginCommon.SensorState) error
 	GetMaxNumOfQsfp() int
 	GetQsfpState(id int32) (pluginCommon.QsfpState, error)
+	GetQsfpPMData(id int32) (pluginCommon.QsfpPMData, error)
 	GetPlatformMgmtDeviceState(state *pluginCommon.PlatformMgmtDeviceState) error
 }
 

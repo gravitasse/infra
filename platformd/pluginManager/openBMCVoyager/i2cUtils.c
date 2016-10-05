@@ -172,7 +172,7 @@ int i2cSet(int i2cBusNum, int chipAddr, int dataAddr, int val)
 		return -1;
 	}
 
-	printf("I2CBus = %d Address = %d\n", i2cbus, address);
+	//printf("I2CBus = %d Address = %d\n", i2cbus, address);
 	file = open_i2c_dev(i2cbus, filename, sizeof(filename));
 	if (file < 0
 	 || check_funcs(file)
@@ -181,7 +181,7 @@ int i2cSet(int i2cBusNum, int chipAddr, int dataAddr, int val)
 
 	res = i2c_smbus_write_byte_data(file, daddress, value);
 	if (res < 0) {
-		fprintf(stderr, "Error: Write failed\n");
+		//fprintf(stderr, "Error: Write failed\n");
 		close(file);
 		return -1;
 	}

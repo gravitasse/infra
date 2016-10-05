@@ -160,7 +160,7 @@ func (fMgr *FaultManager) AddFaultEntryInRB(evt eventUtils.Event, objKey, uuid s
 	}
 
 	fMgr.FRBRWMutex.Lock()
-	idx := fMgr.FaultRB.InsertIntoRingBuffer(fRBEnt)
+	idx, _ := fMgr.FaultRB.InsertIntoRingBuffer(fRBEnt)
 	fMgr.FRBRWMutex.Unlock()
 	return idx
 }

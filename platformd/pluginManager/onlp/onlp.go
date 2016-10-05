@@ -82,7 +82,6 @@ func (driver *onlpDriver) GetFanState(fanId int32) (pluginCommon.FanState, error
 		retObj.OperMode = pluginCommon.FAN_MODE_ON_STR
 	}
 	retObj.OperSpeed = int32(fanInfo.Speed)
-	//states[idx].OperDirection = fanInfo[idx].Direction
 	switch int(fanInfo.Direction) {
 	case pluginCommon.FAN_DIR_B2F:
 		retObj.OperDirection = pluginCommon.FAN_DIR_B2F_STR
@@ -91,7 +90,6 @@ func (driver *onlpDriver) GetFanState(fanId int32) (pluginCommon.FanState, error
 	case pluginCommon.FAN_DIR_INVALID:
 		retObj.OperDirection = pluginCommon.FAN_DIR_INVALID_STR
 	}
-	//states[idx].Status = fanInfo[idx].Status
 	switch int(fanInfo.Status) {
 	case pluginCommon.FAN_STATUS_PRESENT:
 		retObj.Status = pluginCommon.FAN_STATUS_PRESENT_STR
@@ -143,7 +141,7 @@ func (driver *onlpDriver) GetAllFanState(states []pluginCommon.FanState, cnt int
 			states[idx].OperMode = pluginCommon.FAN_MODE_ON_STR
 		}
 		states[idx].OperSpeed = int32(fanInfo[idx].Speed)
-		//states[idx].OperDirection = fanInfo[idx].Direction
+
 		switch int(fanInfo[idx].Direction) {
 		case pluginCommon.FAN_DIR_B2F:
 			states[idx].OperDirection = pluginCommon.FAN_DIR_B2F_STR
@@ -152,7 +150,7 @@ func (driver *onlpDriver) GetAllFanState(states []pluginCommon.FanState, cnt int
 		case pluginCommon.FAN_DIR_INVALID:
 			states[idx].OperDirection = pluginCommon.FAN_DIR_INVALID_STR
 		}
-		//states[idx].Status = fanInfo[idx].Status
+
 		switch int(fanInfo[idx].Status) {
 		case pluginCommon.FAN_STATUS_PRESENT:
 			states[idx].Status = pluginCommon.FAN_STATUS_PRESENT_STR
@@ -164,7 +162,6 @@ func (driver *onlpDriver) GetAllFanState(states []pluginCommon.FanState, cnt int
 			states[idx].Status = pluginCommon.FAN_STATUS_NORMAL_STR
 		}
 		states[idx].Model = C.GoString(&fanInfo[idx].Model[0])
-		//states[idx].Model = ""
 		states[idx].SerialNum = C.GoString(&fanInfo[idx].SerialNum[0])
 	}
 	return nil
@@ -250,11 +247,80 @@ func (driver *onlpDriver) GetPlatformState() (pluginCommon.PlatformState, error)
 }
 
 func (driver *onlpDriver) GetMaxNumOfThermal() int {
-	return 0
+	return 8
 }
 
-func (driver *onlpDriver) GetThermalState(thermalId int32) (tState pluginCommon.ThermalState, err error) {
-	return tState, err
+func (driver *onlpDriver) GetThermalState(thermalId int32) (pluginCommon.ThermalState, error) {
+	var retObj pluginCommon.ThermalState
+	var tInfo C.thermal_info_t
+
+	rt := int(C.GetThermalState(&tInfo, C.int(thermalId)))
+	if rt < 0 {
+		return retObj, errors.New(fmt.Sprintln("Unable to fetch sensor state of", thermalId))
+	}
+
+	retObj.ThermalId = int32(tInfo.sensor_id)
+	retObj.Location = C.GoString(&tInfo.description[0])
+	retObj.Temperature = strconv.Itoa(int(tInfo.temp))
+	retObj.LowerWatermarkTemperature = strconv.Itoa(int(tInfo.threshold_warning))
+	retObj.UpperWatermarkTemperature = strconv.Itoa(int(tInfo.threshold_error))
+	retObj.ShutdownTemperature = strconv.Itoa(int(tInfo.threshold_shutdown))
+
+	return retObj, nil
+}
+
+func (driver *onlpDriver) GetAllThermalState(states []pluginCommon.ThermalState, cnt int) error {
+
+	if cnt > driver.GetMaxNumOfThermal() {
+		return errors.New("Error GetAllThermalState Invalid Count")
+	}
+
+	for idx := 1; idx <= cnt; idx++ {
+		states[idx], _ = driver.GetThermalState(int32(idx))
+	}
+	return nil
+}
+
+func (driver *onlpDriver) GetMaxNumOfPsu() int {
+	return 2
+}
+
+func (driver *onlpDriver) GetPsuState(psuId int32) (pluginCommon.PsuState, error) {
+	var retObj pluginCommon.PsuState
+	var pInfo C.psu_info_t
+
+	rt := int(C.GetPsuState(&pInfo, C.int(psuId)))
+	if rt < 0 {
+		return retObj, errors.New(fmt.Sprintln("Unable to fetch PSU state of", psuId))
+	}
+
+	retObj.PsuId = int32(pInfo.psu_id)
+
+	if pInfo.status != 0 {
+		retObj.Status = "PSU PRESENT"
+		retObj.VoltIn = int32(pInfo.mvin)
+		retObj.VoltOut = int32(pInfo.mvout)
+		retObj.AmpIn = int32(pInfo.miin)
+		retObj.AmpOut = int32(pInfo.miout)
+		retObj.PwrIn = int32(pInfo.mpin)
+		retObj.PwrOut = int32(pInfo.mpout)
+	} else {
+		retObj.Status = "PSU UNPLUGGED"
+	}
+
+	return retObj, nil
+}
+
+func (driver *onlpDriver) GetAllPsuState(states []pluginCommon.PsuState, cnt int) error {
+
+	if cnt > driver.GetMaxNumOfPsu() {
+		return errors.New("Error GetAllPsuState Invalid Count")
+	}
+
+	for idx := 0; idx < cnt; idx++ {
+		states[idx], _ = driver.GetPsuState(int32(idx))
+	}
+	return nil
 }
 
 func (driver *onlpDriver) GetAllSensorState(state *pluginCommon.SensorState) error {
@@ -265,6 +331,10 @@ func (driver *onlpDriver) GetQsfpState(Id int32) (retObj pluginCommon.QsfpState,
 	return retObj, nil
 }
 
+func (driver *onlpDriver) GetQsfpPMData(Id int32) (retObj pluginCommon.QsfpPMData, err error) {
+	return retObj, nil
+}
+
 func (driver *onlpDriver) GetMaxNumOfQsfp() int {
 	driver.logger.Info("Inside Dummy: GetMaxNumOfQsfps()")
 	return 0
@@ -272,4 +342,42 @@ func (driver *onlpDriver) GetMaxNumOfQsfp() int {
 
 func (driver *onlpDriver) GetPlatformMgmtDeviceState(state *pluginCommon.PlatformMgmtDeviceState) error {
 	return errors.New("Not supported")
+}
+
+func (driver *onlpDriver) GetMaxNumOfLed() int {
+	return 12
+}
+
+func (driver *onlpDriver) GetLedState(ledId int32) (pluginCommon.LedState, error) {
+	var retObj pluginCommon.LedState
+	var ledInfo C.led_info_t
+
+	rt := int(C.GetLedState(&ledInfo, C.int(ledId)))
+	if rt < 0 {
+		return retObj, errors.New(fmt.Sprintln("Unable to fetch Led state of", ledId))
+	}
+
+	retObj.LedId = int32(ledInfo.led_id)
+
+	if ledInfo.status != 0 {
+		retObj.LedState = "LED PRESENT"
+		retObj.LedIdentify = C.GoString(&ledInfo.description[0])
+		retObj.LedColor = C.GoString(&ledInfo.color[0])
+	} else {
+		retObj.LedState = "LED NOT PRESENT"
+	}
+
+	return retObj, nil
+}
+
+func (driver *onlpDriver) GetAllLedState(states []pluginCommon.LedState, cnt int) error {
+
+	if cnt > driver.GetMaxNumOfLed() {
+		return errors.New("Error GetAllLedState Invalid Count")
+	}
+
+	for idx := 0; idx < cnt; idx++ {
+		states[idx], _ = driver.GetLedState(int32(idx))
+	}
+	return nil
 }

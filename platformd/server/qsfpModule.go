@@ -46,3 +46,33 @@ func (svr *PlatformdServer) updateQsfpConfig(oldCfg *objects.QsfpConfig, newCfg 
 	ret, err := svr.pluginMgr.UpdateQsfpConfig(oldCfg, newCfg, attrset)
 	return ret, err
 }
+
+func (svr *PlatformdServer) getQsfpPMState(QsfpId int32, Resource string, Class string) (*objects.QsfpPMState, error) {
+	retObj, err := svr.pluginMgr.GetQsfpPMState(QsfpId, Resource, Class)
+	return retObj, err
+}
+
+func (svr *PlatformdServer) getQsfpChannelState(QsfpId int32, ChannelNum int32) (*objects.QsfpChannelState, error) {
+	retObj, err := svr.pluginMgr.GetQsfpChannelState(QsfpId, ChannelNum)
+	return retObj, err
+}
+
+func (svr *PlatformdServer) getBulkQsfpChannelState(fromIdx int, count int) (*objects.QsfpChannelStateGetInfo, error) {
+	retObj, err := svr.pluginMgr.GetBulkQsfpChannelState(fromIdx, count)
+	return retObj, err
+}
+
+func (svr *PlatformdServer) getBulkQsfpChannelConfig(fromIdx int, count int) (*objects.QsfpChannelConfigGetInfo, error) {
+	retObj, err := svr.pluginMgr.GetBulkQsfpChannelConfig(fromIdx, count)
+	return retObj, err
+}
+
+func (svr *PlatformdServer) updateQsfpChannelConfig(oldCfg *objects.QsfpChannelConfig, newCfg *objects.QsfpChannelConfig, attrset []bool) (bool, error) {
+	ret, err := svr.pluginMgr.UpdateQsfpChannelConfig(oldCfg, newCfg, attrset)
+	return ret, err
+}
+
+func (svr *PlatformdServer) getQsfpChannelPMState(QsfpId int32, ChannelNum int32, Resource string, Class string) (*objects.QsfpChannelPMState, error) {
+	retObj, err := svr.pluginMgr.GetQsfpChannelPMState(QsfpId, ChannelNum, Resource, Class)
+	return retObj, err
+}

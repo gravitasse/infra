@@ -82,21 +82,14 @@ typedef struct sfp_info {
    char eeprom[256];
 } sfp_info_t;
 
+#define QsfpNumChannel 4
+
 typedef struct qsfp_info_s {
         float   Temperature;
         float   SupplyVoltage;
-        float   RX1Power;
-        float   RX2Power;
-        float   RX3Power;
-        float   RX4Power;
-        float   TX1Bias;
-        float   TX2Bias;
-        float   TX3Bias; 
-        float   TX4Bias;
-        float   TX1Power;
-        float   TX2Power;
-        float   TX3Power;
-        float   TX4Power;
+        float   RXPower[QsfpNumChannel];
+        float   TXBias[QsfpNumChannel];
+        float   TXPower[QsfpNumChannel];
         float   TempHighAlarm;
         float   TempLowAlarm;
         float   TempHighWarning;
@@ -119,12 +112,69 @@ typedef struct qsfp_info_s {
         float TXPowerLowWarning;
         char VendorName[20];
         char VendorOUI [10];
-        char VendorPN[20]; 
+        char VendorPN[20];
         char VendorRev[3];
         char VendorSN[20];
         char DataCode[10];
 } qsfp_info_t;
 
+typedef struct qsfp_pm_info_s {
+        float   Temperature;
+        float   SupplyVoltage;
+        float   RXPower[QsfpNumChannel];
+        float   TXBias[QsfpNumChannel];
+        float   TXPower[QsfpNumChannel];
+} qsfp_pm_info_t;
 
 
-#endif // PLUGINCOMMON_H
+typedef enum {
+    SENSOR_ERROR = -1,
+    SENSOR_OK = 0,
+    SENSOR_MISSING = 1,
+}SENSOR_RET;
+
+typedef struct thermal_info {
+    int sensor_id;
+    unsigned int status;
+    unsigned int caps;
+    int temp;
+    int threshold_warning;
+    int threshold_error;
+    int threshold_shutdown;
+    char description[256];
+}thermal_info_t;
+
+typedef enum {
+    PSU_ERROR = -1,
+    PSU_OK = 0,
+    PSU_MISSING = 1,
+}PSU_RET;
+
+typedef struct psu_info {
+    int psu_id;
+    char model[256];
+    char serial[256];
+    unsigned int status;
+    int mvin;
+    int mvout;
+    int miin;
+    int miout;
+    int mpin;
+    int mpout;
+}psu_info_t;
+
+typedef enum {
+    LED_ERROR = -1,
+    LED_OK = 0,
+    LED_MISSING = 1,
+}LED_RET;
+
+typedef struct led_info {
+    int led_id;
+    unsigned int status;
+    char color[64];
+    char description[256];
+}led_info_t;
+
+
+#endif /* PLUGINCOMMON_H */

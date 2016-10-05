@@ -57,22 +57,32 @@ func (driver *openBMCVoyagerDriver) GetQsfpState(Id int32) (retObj pluginCommon.
 	retObj.DataCode = C.GoString(&qsfpInfo.DataCode[0])
 	retObj.Temperature = float64(qsfpInfo.Temperature)
 	retObj.Voltage = float64(qsfpInfo.SupplyVoltage)
-	retObj.RX1Power = float64(qsfpInfo.RX1Power)
-	retObj.RX2Power = float64(qsfpInfo.RX2Power)
-	retObj.RX3Power = float64(qsfpInfo.RX3Power)
-	retObj.RX4Power = float64(qsfpInfo.RX4Power)
-	retObj.TX1Power = float64(qsfpInfo.TX1Power)
-	retObj.TX2Power = float64(qsfpInfo.TX2Power)
-	retObj.TX3Power = float64(qsfpInfo.TX3Power)
-	retObj.TX4Power = float64(qsfpInfo.TX4Power)
-	retObj.TX1Bias = float64(qsfpInfo.TX1Bias)
-	retObj.TX2Bias = float64(qsfpInfo.TX2Bias)
-	retObj.TX3Bias = float64(qsfpInfo.TX3Bias)
-	retObj.TX4Bias = float64(qsfpInfo.TX4Bias)
+	for idx := 0; idx < int(pluginCommon.QsfpNumChannel); idx++ {
+		retObj.RXPower[idx] = float64(qsfpInfo.RXPower[idx])
+		retObj.TXPower[idx] = float64(qsfpInfo.TXPower[idx])
+		retObj.TXBias[idx] = float64(qsfpInfo.TXBias[idx])
+	}
 	return retObj, nil
 }
 
 func (driver *openBMCVoyagerDriver) GetMaxNumOfQsfp() int {
 	driver.logger.Info("Inside OpenBMC Voyager: GetMaxNumOfQsfps()")
 	return MAX_NUM_OF_QSFP
+}
+
+func (driver *openBMCVoyagerDriver) GetQsfpPMData(Id int32) (retObj pluginCommon.QsfpPMData, err error) {
+	var qsfpPMInfo C.qsfp_pm_info_t
+
+	retval := int(C.GetQsfpPMData(&qsfpPMInfo, C.int(Id)))
+	if retval < 0 {
+		return retObj, errors.New(fmt.Sprintln("Unable to fetch qsft pm data of", Id))
+	}
+	retObj.Temperature = float64(qsfpPMInfo.Temperature)
+	retObj.Voltage = float64(qsfpPMInfo.SupplyVoltage)
+	for idx := 0; idx < int(pluginCommon.QsfpNumChannel); idx++ {
+		retObj.RXPower[idx] = float64(qsfpPMInfo.RXPower[idx])
+		retObj.TXPower[idx] = float64(qsfpPMInfo.TXPower[idx])
+		retObj.TXBias[idx] = float64(qsfpPMInfo.TXBias[idx])
+	}
+	return retObj, nil
 }

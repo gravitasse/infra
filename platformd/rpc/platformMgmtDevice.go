@@ -21,57 +21,38 @@
 // |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__|
 //
 
-package objects
+package rpc
 
-type FanSensorState struct {
-	Name         string
-	CurrentSpeed int32
-}
-
-type FanSensorStateGetInfo struct {
-	EndIdx int
-	Count  int
-	More   bool
-	List   []*FanSensorState
-}
-
-type FanSensorConfig struct {
-	Name                   string
-	AdminState             string
-	HigherAlarmThreshold   int32
-	HigherWarningThreshold int32
-	LowerWarningThreshold  int32
-	LowerAlarmThreshold    int32
-	PMClassAAdminState     string
-	PMClassBAdminState     string
-	PMClassCAdminState     string
-}
-
-type FanSensorConfigGetInfo struct {
-	EndIdx int
-	Count  int
-	More   bool
-	List   []*FanSensorConfig
-}
-
-const (
-	FAN_SENSOR_UPDATE_ADMIN_STATE            = 0x1
-	FAN_SENSOR_UPDATE_HIGHER_ALARM_THRESHOLD = 0x2
-	FAN_SENSOR_UPDATE_HIGHER_WARN_THRESHOLD  = 0x4
-	FAN_SENSOR_UPDATE_LOWER_WARN_THRESHOLD   = 0x8
-	FAN_SENSOR_UPDATE_LOWER_ALARM_THRESHOLD  = 0x10
-	FAN_SENSOR_UPDATE_PM_CLASS_A_ADMIN_STATE = 0x20
-	FAN_SENSOR_UPDATE_PM_CLASS_B_ADMIN_STATE = 0x40
-	FAN_SENSOR_UPDATE_PM_CLASS_C_ADMIN_STATE = 0x80
+import (
+	"infra/platformd/api"
+	"platformd"
 )
 
-type FanSensorPMData struct {
-	TimeStamp string
-	Value     int32
+func (rpcHdl *rpcServiceHandler) GetPlatformMgmtDeviceState(DeviceName string) (*platformd.PlatformMgmtDeviceState, error) {
+	var rpcObj *platformd.PlatformMgmtDeviceState
+	var err error
+
+	obj, err := api.GetPlatformMgmtDeviceState(DeviceName)
+	if err == nil {
+		rpcObj = convertToRPCFmtPlatformMgmtDeviceState(obj)
+	}
+	return rpcObj, err
 }
 
-type FanSensorPMState struct {
-	Name  string
-	Class string
-	Data  []interface{}
+func (rpcHdl *rpcServiceHandler) GetBulkPlatformMgmtDeviceState(fromIdx, count platformd.Int) (*platformd.PlatformMgmtDeviceStateGetInfo, error) {
+	var getBulkObj platformd.PlatformMgmtDeviceStateGetInfo
+	var err error
+
+	info, err := api.GetBulkPlatformMgmtDeviceState(int(fromIdx), int(count))
+	if err != nil {
+		return nil, err
+	}
+	getBulkObj.StartIdx = fromIdx
+	getBulkObj.EndIdx = platformd.Int(info.EndIdx)
+	getBulkObj.More = info.More
+	getBulkObj.Count = platformd.Int(len(info.List))
+	for idx := 0; idx < len(info.List); idx++ {
+		getBulkObj.PlatformMgmtDeviceStateList = append(getBulkObj.PlatformMgmtDeviceStateList, convertToRPCFmtPlatformMgmtDeviceState(info.List[idx]))
+	}
+	return &getBulkObj, err
 }

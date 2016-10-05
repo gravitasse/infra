@@ -50,7 +50,7 @@ type FanSensor struct {
 	Fan2Front string `json:"Fan 2 front"`
 	Fan5Front string `json:"Fan 5 front"`
 	Name      string `json:"name"`
-	Fan1Front string `json:"Fan 1 Front"`
+	Fan1Front string `json:"Fan 1 front"`
 	Adapter   string `json:"Adapter"`
 	Fan1Rear  string `json:"Fan 1 rear"`
 	Fan5Rear  string `json:"Fan 5 rear"`
@@ -281,7 +281,7 @@ func extractVoltageData(state *pluginCommon.SensorState, info interface{}) error
 
 	ent, _ = state.VoltageSensor["+3.3 VMON6"]
 	ent.Value = getVoltageValue(sensor.VMON6)
-	state.VoltageSensor["+3.3 VMON5"] = ent
+	state.VoltageSensor["+3.3 VMON6"] = ent
 
 	ent, _ = state.VoltageSensor["+1.0 VMON2"]
 	ent.Value = getVoltageValue(sensor.VMON2)
@@ -327,21 +327,25 @@ func extractFanData(state *pluginCommon.SensorState, info interface{}) error {
 	ent.Value = getFanValue(sensor.Fan1Front)
 	state.FanSensor["Fan 1 front"] = ent
 
+	ent, _ = state.FanSensor["Fan 1 rear"]
+	ent.Value = getFanValue(sensor.Fan1Rear)
+	state.FanSensor["Fan 1 rear"] = ent
+
+	ent, _ = state.FanSensor["Fan 2 front"]
+	ent.Value = getFanValue(sensor.Fan2Front)
+	state.FanSensor["Fan 2 front"] = ent
+
 	ent, _ = state.FanSensor["Fan 2 rear"]
 	ent.Value = getFanValue(sensor.Fan2Rear)
-	state.FanSensor["Fan 2 Rear"] = ent
+	state.FanSensor["Fan 2 rear"] = ent
+
+	ent, _ = state.FanSensor["Fan 3 front"]
+	ent.Value = getFanValue(sensor.Fan3Front)
+	state.FanSensor["Fan 3 front"] = ent
 
 	ent, _ = state.FanSensor["Fan 3 rear"]
 	ent.Value = getFanValue(sensor.Fan3Rear)
-	state.FanSensor["Fan 3 Rear"] = ent
-
-	ent, _ = state.FanSensor["Fan 5 front"]
-	ent.Value = getFanValue(sensor.Fan5Front)
-	state.FanSensor["Fan 5 front"] = ent
-
-	ent, _ = state.FanSensor["Fan 5 rear"]
-	ent.Value = getFanValue(sensor.Fan5Rear)
-	state.FanSensor["Fan 5 Rear"] = ent
+	state.FanSensor["Fan 3 rear"] = ent
 
 	ent, _ = state.FanSensor["Fan 4 front"]
 	ent.Value = getFanValue(sensor.Fan4Front)
@@ -349,7 +353,7 @@ func extractFanData(state *pluginCommon.SensorState, info interface{}) error {
 
 	ent, _ = state.FanSensor["Fan 4 rear"]
 	ent.Value = getFanValue(sensor.Fan4Rear)
-	state.FanSensor["Fan 4 Rear"] = ent
+	state.FanSensor["Fan 4 rear"] = ent
 
 	ent, _ = state.FanSensor["Fan 5 front"]
 	ent.Value = getFanValue(sensor.Fan5Front)
@@ -357,7 +361,7 @@ func extractFanData(state *pluginCommon.SensorState, info interface{}) error {
 
 	ent, _ = state.FanSensor["Fan 5 rear"]
 	ent.Value = getFanValue(sensor.Fan5Rear)
-	state.FanSensor["Fan 5 Rear"] = ent
+	state.FanSensor["Fan 5 rear"] = ent
 
 	return nil
 }

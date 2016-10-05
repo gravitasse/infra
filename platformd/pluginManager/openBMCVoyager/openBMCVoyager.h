@@ -27,6 +27,7 @@
 #include "pluginCommon.h"
 
 int GetQsfpState(qsfp_info_t *info, int id); 
+int GetQsfpPMData(qsfp_pm_info_t *info, int id); 
 
 #endif //OPENBMC_VOYAGER_H
 

@@ -74,6 +74,12 @@ func main() {
 	// Initialize api layer
 	api.InitApiLayer(dmn.server)
 
+	//Start keepalive for watchdog
+	dmn.StartKeepAlive()
+
+	//Wait for server started msg
+	_ = <-dmn.server.InitCompleteCh
+
 	//Get RPC server handle
 	var rpcServerAddr string
 	for _, value := range dmn.FSBaseDmn.ClientsList {
@@ -85,13 +91,7 @@ func main() {
 	if rpcServerAddr == "" {
 		panic("Platform Daemon is not part of the system profile")
 	}
-	dmn.rpcServer = rpc.NewRPCServer(rpcServerAddr, dmn.FSBaseDmn.Logger)
-
-	//Start keepalive for watchdog
-	dmn.StartKeepAlive()
-
-	//Wait for server started msg
-	_ = <-dmn.server.InitCompleteCh
+	dmn.rpcServer = rpc.NewRPCServer(rpcServerAddr, dmn.FSBaseDmn.Logger, dmn.DbHdl)
 
 	//Start RPC server
 	dmn.FSBaseDmn.Logger.Info("Platform Daemon server started")

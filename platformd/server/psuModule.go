@@ -21,57 +21,18 @@
 // |__|     |_______||_______/__/ \__\ |_______/        \__/  \__/     |__|     |__|      \______||__|  |__|
 //
 
-package objects
+package server
 
-type FanSensorState struct {
-	Name         string
-	CurrentSpeed int32
-}
-
-type FanSensorStateGetInfo struct {
-	EndIdx int
-	Count  int
-	More   bool
-	List   []*FanSensorState
-}
-
-type FanSensorConfig struct {
-	Name                   string
-	AdminState             string
-	HigherAlarmThreshold   int32
-	HigherWarningThreshold int32
-	LowerWarningThreshold  int32
-	LowerAlarmThreshold    int32
-	PMClassAAdminState     string
-	PMClassBAdminState     string
-	PMClassCAdminState     string
-}
-
-type FanSensorConfigGetInfo struct {
-	EndIdx int
-	Count  int
-	More   bool
-	List   []*FanSensorConfig
-}
-
-const (
-	FAN_SENSOR_UPDATE_ADMIN_STATE            = 0x1
-	FAN_SENSOR_UPDATE_HIGHER_ALARM_THRESHOLD = 0x2
-	FAN_SENSOR_UPDATE_HIGHER_WARN_THRESHOLD  = 0x4
-	FAN_SENSOR_UPDATE_LOWER_WARN_THRESHOLD   = 0x8
-	FAN_SENSOR_UPDATE_LOWER_ALARM_THRESHOLD  = 0x10
-	FAN_SENSOR_UPDATE_PM_CLASS_A_ADMIN_STATE = 0x20
-	FAN_SENSOR_UPDATE_PM_CLASS_B_ADMIN_STATE = 0x40
-	FAN_SENSOR_UPDATE_PM_CLASS_C_ADMIN_STATE = 0x80
+import (
+	"infra/platformd/objects"
 )
 
-type FanSensorPMData struct {
-	TimeStamp string
-	Value     int32
+func (svr *PlatformdServer) getPsuState(psuId int32) (*objects.PsuState, error) {
+	retObj, err := svr.pluginMgr.GetPsuState(psuId)
+	return retObj, err
 }
 
-type FanSensorPMState struct {
-	Name  string
-	Class string
-	Data  []interface{}
+func (svr *PlatformdServer) getBulkPsuState(fromIdx int, count int) (*objects.PsuStateGetInfo, error) {
+	retObj, err := svr.pluginMgr.GetBulkPsuState(fromIdx, count)
+	return retObj, err
 }

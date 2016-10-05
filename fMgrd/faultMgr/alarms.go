@@ -159,7 +159,7 @@ func (fMgr *FaultManager) AddAlarmEntryInRB(evt eventUtils.Event, objKey, uuid s
 	}
 
 	fMgr.ARBRWMutex.Lock()
-	idx := fMgr.AlarmRB.InsertIntoRingBuffer(aRBEnt)
+	idx, _ := fMgr.AlarmRB.InsertIntoRingBuffer(aRBEnt)
 	fMgr.ARBRWMutex.Unlock()
 	return idx
 }

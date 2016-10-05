@@ -107,6 +107,9 @@ func convertToRPCFmtFanSensorConfig(obj *objects.FanSensorConfig) *platformd.Fan
 		HigherWarningThreshold: obj.HigherWarningThreshold,
 		LowerAlarmThreshold:    obj.LowerAlarmThreshold,
 		LowerWarningThreshold:  obj.LowerWarningThreshold,
+		PMClassAAdminState:     obj.PMClassAAdminState,
+		PMClassBAdminState:     obj.PMClassBAdminState,
+		PMClassCAdminState:     obj.PMClassCAdminState,
 	}
 }
 
@@ -118,6 +121,9 @@ func convertRPCToObjFmtFanSensorConfig(rpcObj *platformd.FanSensor) *objects.Fan
 		HigherWarningThreshold: rpcObj.HigherWarningThreshold,
 		LowerAlarmThreshold:    rpcObj.LowerAlarmThreshold,
 		LowerWarningThreshold:  rpcObj.LowerWarningThreshold,
+		PMClassAAdminState:     rpcObj.PMClassAAdminState,
+		PMClassBAdminState:     rpcObj.PMClassBAdminState,
+		PMClassCAdminState:     rpcObj.PMClassCAdminState,
 	}
 }
 
@@ -136,6 +142,9 @@ func convertToRPCFmtTemperatureSensorConfig(obj *objects.TemperatureSensorConfig
 		HigherWarningThreshold: obj.HigherWarningThreshold,
 		LowerAlarmThreshold:    obj.LowerAlarmThreshold,
 		LowerWarningThreshold:  obj.LowerWarningThreshold,
+		PMClassAAdminState:     obj.PMClassAAdminState,
+		PMClassBAdminState:     obj.PMClassBAdminState,
+		PMClassCAdminState:     obj.PMClassCAdminState,
 	}
 }
 
@@ -147,6 +156,9 @@ func convertRPCToObjFmtTemperatureSensorConfig(rpcObj *platformd.TemperatureSens
 		HigherWarningThreshold: rpcObj.HigherWarningThreshold,
 		LowerAlarmThreshold:    rpcObj.LowerAlarmThreshold,
 		LowerWarningThreshold:  rpcObj.LowerWarningThreshold,
+		PMClassAAdminState:     rpcObj.PMClassAAdminState,
+		PMClassBAdminState:     rpcObj.PMClassBAdminState,
+		PMClassCAdminState:     rpcObj.PMClassCAdminState,
 	}
 }
 
@@ -165,6 +177,9 @@ func convertToRPCFmtVoltageSensorConfig(obj *objects.VoltageSensorConfig) *platf
 		HigherWarningThreshold: obj.HigherWarningThreshold,
 		LowerAlarmThreshold:    obj.LowerAlarmThreshold,
 		LowerWarningThreshold:  obj.LowerWarningThreshold,
+		PMClassAAdminState:     obj.PMClassAAdminState,
+		PMClassBAdminState:     obj.PMClassBAdminState,
+		PMClassCAdminState:     obj.PMClassCAdminState,
 	}
 }
 
@@ -176,6 +191,9 @@ func convertRPCToObjFmtVoltageSensorConfig(rpcObj *platformd.VoltageSensor) *obj
 		HigherWarningThreshold: rpcObj.HigherWarningThreshold,
 		LowerAlarmThreshold:    rpcObj.LowerAlarmThreshold,
 		LowerWarningThreshold:  rpcObj.LowerWarningThreshold,
+		PMClassAAdminState:     rpcObj.PMClassAAdminState,
+		PMClassBAdminState:     rpcObj.PMClassBAdminState,
+		PMClassCAdminState:     rpcObj.PMClassCAdminState,
 	}
 }
 
@@ -194,6 +212,9 @@ func convertToRPCFmtPowerConverterSensorConfig(obj *objects.PowerConverterSensor
 		HigherWarningThreshold: obj.HigherWarningThreshold,
 		LowerAlarmThreshold:    obj.LowerAlarmThreshold,
 		LowerWarningThreshold:  obj.LowerWarningThreshold,
+		PMClassAAdminState:     obj.PMClassAAdminState,
+		PMClassBAdminState:     obj.PMClassBAdminState,
+		PMClassCAdminState:     obj.PMClassCAdminState,
 	}
 }
 
@@ -205,6 +226,9 @@ func convertRPCToObjFmtPowerConverterSensorConfig(rpcObj *platformd.PowerConvert
 		HigherWarningThreshold: rpcObj.HigherWarningThreshold,
 		LowerAlarmThreshold:    rpcObj.LowerAlarmThreshold,
 		LowerWarningThreshold:  rpcObj.LowerWarningThreshold,
+		PMClassAAdminState:     rpcObj.PMClassAAdminState,
+		PMClassBAdminState:     rpcObj.PMClassBAdminState,
+		PMClassCAdminState:     rpcObj.PMClassCAdminState,
 	}
 }
 
@@ -221,24 +245,15 @@ func convertToRPCFmtQsfpConfig(obj *objects.QsfpConfig) *platformd.Qsfp {
 		AdminState:               obj.AdminState,
 		HigherAlarmTemperature:   obj.HigherAlarmTemperature,
 		HigherAlarmVoltage:       obj.HigherAlarmVoltage,
-		HigherAlarmRXPower:       obj.HigherAlarmRXPower,
-		HigherAlarmTXPower:       obj.HigherAlarmTXPower,
-		HigherAlarmTXBias:        obj.HigherAlarmTXBias,
 		HigherWarningTemperature: obj.HigherWarningTemperature,
 		HigherWarningVoltage:     obj.HigherWarningVoltage,
-		HigherWarningRXPower:     obj.HigherWarningRXPower,
-		HigherWarningTXPower:     obj.HigherWarningTXPower,
-		HigherWarningTXBias:      obj.HigherWarningTXBias,
 		LowerAlarmTemperature:    obj.LowerAlarmTemperature,
 		LowerAlarmVoltage:        obj.LowerAlarmVoltage,
-		LowerAlarmRXPower:        obj.LowerAlarmRXPower,
-		LowerAlarmTXPower:        obj.LowerAlarmTXPower,
-		LowerAlarmTXBias:         obj.LowerAlarmTXBias,
 		LowerWarningTemperature:  obj.LowerWarningTemperature,
 		LowerWarningVoltage:      obj.LowerWarningVoltage,
-		LowerWarningRXPower:      obj.LowerWarningRXPower,
-		LowerWarningTXPower:      obj.LowerWarningTXPower,
-		LowerWarningTXBias:       obj.LowerWarningTXBias,
+		PMClassAAdminState:       obj.PMClassAAdminState,
+		PMClassBAdminState:       obj.PMClassBAdminState,
+		PMClassCAdminState:       obj.PMClassCAdminState,
 	}
 }
 
@@ -248,24 +263,15 @@ func convertRPCToObjFmtQsfpConfig(rpcObj *platformd.Qsfp) *objects.QsfpConfig {
 		AdminState:               rpcObj.AdminState,
 		HigherAlarmTemperature:   rpcObj.HigherAlarmTemperature,
 		HigherAlarmVoltage:       rpcObj.HigherAlarmVoltage,
-		HigherAlarmRXPower:       rpcObj.HigherAlarmRXPower,
-		HigherAlarmTXPower:       rpcObj.HigherAlarmTXPower,
-		HigherAlarmTXBias:        rpcObj.HigherAlarmTXBias,
 		HigherWarningTemperature: rpcObj.HigherWarningTemperature,
 		HigherWarningVoltage:     rpcObj.HigherWarningVoltage,
-		HigherWarningRXPower:     rpcObj.HigherWarningRXPower,
-		HigherWarningTXPower:     rpcObj.HigherWarningTXPower,
-		HigherWarningTXBias:      rpcObj.HigherWarningTXBias,
 		LowerAlarmTemperature:    rpcObj.LowerAlarmTemperature,
 		LowerAlarmVoltage:        rpcObj.LowerAlarmVoltage,
-		LowerAlarmRXPower:        rpcObj.LowerAlarmRXPower,
-		LowerAlarmTXPower:        rpcObj.LowerAlarmTXPower,
-		LowerAlarmTXBias:         rpcObj.LowerAlarmTXBias,
 		LowerWarningTemperature:  rpcObj.LowerWarningTemperature,
 		LowerWarningVoltage:      rpcObj.LowerWarningVoltage,
-		LowerWarningRXPower:      rpcObj.LowerWarningRXPower,
-		LowerWarningTXPower:      rpcObj.LowerWarningTXPower,
-		LowerWarningTXBias:       rpcObj.LowerWarningTXBias,
+		PMClassAAdminState:       rpcObj.PMClassAAdminState,
+		PMClassBAdminState:       rpcObj.PMClassBAdminState,
+		PMClassCAdminState:       rpcObj.PMClassCAdminState,
 	}
 }
 
@@ -281,18 +287,63 @@ func convertToRPCFmtQsfpState(obj *objects.QsfpState) *platformd.QsfpState {
 		DataCode:           obj.DataCode,
 		Temperature:        obj.Temperature,
 		Voltage:            obj.Voltage,
-		RX1Power:           obj.RX1Power,
-		RX2Power:           obj.RX2Power,
-		RX3Power:           obj.RX3Power,
-		RX4Power:           obj.RX4Power,
-		TX1Power:           obj.TX1Power,
-		TX2Power:           obj.TX2Power,
-		TX3Power:           obj.TX3Power,
-		TX4Power:           obj.TX4Power,
-		TX1Bias:            obj.TX1Bias,
-		TX2Bias:            obj.TX2Bias,
-		TX3Bias:            obj.TX3Bias,
-		TX4Bias:            obj.TX4Bias,
+	}
+}
+
+func convertToRPCFmtQsfpChannelConfig(obj *objects.QsfpChannelConfig) *platformd.QsfpChannel {
+	return &platformd.QsfpChannel{
+		QsfpId:               obj.QsfpId,
+		ChannelNum:           obj.ChannelNum,
+		AdminState:           obj.AdminState,
+		HigherAlarmRXPower:   obj.HigherAlarmRXPower,
+		HigherAlarmTXPower:   obj.HigherAlarmTXPower,
+		HigherAlarmTXBias:    obj.HigherAlarmTXBias,
+		HigherWarningRXPower: obj.HigherWarningRXPower,
+		HigherWarningTXPower: obj.HigherWarningTXPower,
+		HigherWarningTXBias:  obj.HigherWarningTXBias,
+		LowerAlarmRXPower:    obj.LowerAlarmRXPower,
+		LowerAlarmTXPower:    obj.LowerAlarmTXPower,
+		LowerAlarmTXBias:     obj.LowerAlarmTXBias,
+		LowerWarningRXPower:  obj.LowerWarningRXPower,
+		LowerWarningTXPower:  obj.LowerWarningTXPower,
+		LowerWarningTXBias:   obj.LowerWarningTXBias,
+		PMClassAAdminState:   obj.PMClassAAdminState,
+		PMClassBAdminState:   obj.PMClassBAdminState,
+		PMClassCAdminState:   obj.PMClassCAdminState,
+	}
+}
+
+func convertRPCToObjFmtQsfpChannelConfig(rpcObj *platformd.QsfpChannel) *objects.QsfpChannelConfig {
+	return &objects.QsfpChannelConfig{
+		QsfpId:               rpcObj.QsfpId,
+		ChannelNum:           rpcObj.ChannelNum,
+		AdminState:           rpcObj.AdminState,
+		HigherAlarmRXPower:   rpcObj.HigherAlarmRXPower,
+		HigherAlarmTXPower:   rpcObj.HigherAlarmTXPower,
+		HigherAlarmTXBias:    rpcObj.HigherAlarmTXBias,
+		HigherWarningRXPower: rpcObj.HigherWarningRXPower,
+		HigherWarningTXPower: rpcObj.HigherWarningTXPower,
+		HigherWarningTXBias:  rpcObj.HigherWarningTXBias,
+		LowerAlarmRXPower:    rpcObj.LowerAlarmRXPower,
+		LowerAlarmTXPower:    rpcObj.LowerAlarmTXPower,
+		LowerAlarmTXBias:     rpcObj.LowerAlarmTXBias,
+		LowerWarningRXPower:  rpcObj.LowerWarningRXPower,
+		LowerWarningTXPower:  rpcObj.LowerWarningTXPower,
+		LowerWarningTXBias:   rpcObj.LowerWarningTXBias,
+		PMClassAAdminState:   rpcObj.PMClassAAdminState,
+		PMClassBAdminState:   rpcObj.PMClassBAdminState,
+		PMClassCAdminState:   rpcObj.PMClassCAdminState,
+	}
+}
+
+func convertToRPCFmtQsfpChannelState(obj *objects.QsfpChannelState) *platformd.QsfpChannelState {
+	return &platformd.QsfpChannelState{
+		QsfpId:     obj.QsfpId,
+		ChannelNum: obj.ChannelNum,
+		Present:    obj.Present,
+		RXPower:    obj.RXPower,
+		TXPower:    obj.TXPower,
+		TXBias:     obj.TXBias,
 	}
 }
 
@@ -378,4 +429,80 @@ func convertToRPCFmtPowerConverterSensorPMState(obj *objects.PowerConverterSenso
 		Data:  data,
 	}
 
+}
+
+func convertToRPCFmtQsfpPMState(obj *objects.QsfpPMState) *platformd.QsfpPMDataState {
+	length := len(obj.Data)
+	data := make([]*platformd.QsfpPMData, length)
+	// Revisit
+	for idx := 0; idx < length; idx++ {
+		objData := obj.Data[length-1-idx].(objects.QsfpPMData)
+		data[idx] = new(platformd.QsfpPMData)
+		data[idx].TimeStamp = objData.TimeStamp
+		data[idx].Value = objData.Value
+	}
+	return &platformd.QsfpPMDataState{
+		QsfpId:   obj.QsfpId,
+		Resource: obj.Resource,
+		Class:    obj.Class,
+		Data:     data,
+	}
+}
+
+func convertToRPCFmtQsfpChannelPMState(obj *objects.QsfpChannelPMState) *platformd.QsfpChannelPMDataState {
+	length := len(obj.Data)
+	data := make([]*platformd.QsfpChannelPMData, length)
+	// Revisit
+	for idx := 0; idx < length; idx++ {
+		objData := obj.Data[length-1-idx].(objects.QsfpPMData)
+		data[idx] = new(platformd.QsfpChannelPMData)
+		data[idx].TimeStamp = objData.TimeStamp
+		data[idx].Value = objData.Value
+	}
+	return &platformd.QsfpChannelPMDataState{
+		QsfpId:     obj.QsfpId,
+		ChannelNum: obj.ChannelNum,
+		Resource:   obj.Resource,
+		Class:      obj.Class,
+		Data:       data,
+	}
+}
+
+func convertToRPCFmtPsuState(obj *objects.PsuState) *platformd.PsuState {
+	return &platformd.PsuState{
+		PsuId:      obj.PsuId,
+		AdminState: obj.AdminState,
+		ModelNum:   obj.ModelNum,
+		SerialNum:  obj.SerialNum,
+		Vin:        obj.Vin,
+		Vout:       obj.Vout,
+		Iin:        obj.Iin,
+		Iout:       obj.Iout,
+		Pin:        obj.Pin,
+		Pout:       obj.Pout,
+	}
+}
+
+//type LedState struct {
+//	baseObj
+//	LedId       int32  `SNAPROUTE: "KEY", ACCESS:"r", MULTIPLICITY:"*", DESCRIPTION: "LED id", DEFAULT:0`
+//	LedIdentify string `DESCRIPTION: "LED represents FAN/PSU/RESET etc"`
+//	LedState    string `DESCRIPTION: "LED State ON/OFF"`
+//	LedColor    string `DESCRIPTION: "LED Color"`
+//}
+
+//type LedState struct {
+//    LedId       int32
+//    LedIdentify string
+//    LedState    string
+//    LedColor    string
+//}
+
+func convertToRPCFmtLedState(obj *objects.LedState) *platformd.LedState {
+	return &platformd.LedState{
+		LedId:       obj.LedId,
+		LedIdentify: obj.LedIdentify,
+		LedState:    obj.LedState,
+		LedColor:    obj.LedColor,
+	}
 }

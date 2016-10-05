@@ -296,11 +296,19 @@ func (driver *openBMCDriver) GetThermalState(thermalId int32) (pluginCommon.Ther
 	return state, nil
 }
 
+func (driver *openBMCDriver) GetAllThermalState(states []pluginCommon.ThermalState, cnt int) error {
+	return nil
+}
+
 func (driver *openBMCDriver) GetAllSensorState(state *pluginCommon.SensorState) error {
 	return errors.New("Not supported")
 }
 
 func (driver *openBMCDriver) GetQsfpState(Id int32) (retObj pluginCommon.QsfpState, err error) {
+	return retObj, nil
+}
+
+func (driver *openBMCDriver) GetQsfpPMData(Id int32) (retObj pluginCommon.QsfpPMData, err error) {
 	return retObj, nil
 }
 
@@ -311,4 +319,30 @@ func (driver *openBMCDriver) GetMaxNumOfQsfp() int {
 
 func (driver *openBMCDriver) GetPlatformMgmtDeviceState(state *pluginCommon.PlatformMgmtDeviceState) error {
 	return errors.New("Not supported")
+}
+
+func (driver *openBMCDriver) GetMaxNumOfPsu() int {
+	return 0
+}
+
+func (driver *openBMCDriver) GetPsuState(psuId int32) (pluginCommon.PsuState, error) {
+	var retObj pluginCommon.PsuState
+	return retObj, nil
+}
+
+func (driver *openBMCDriver) GetAllPsuState(states []pluginCommon.PsuState, cnt int) error {
+	return nil
+}
+
+func (driver *openBMCDriver) GetMaxNumOfLed() int {
+	return 0
+}
+
+func (driver *openBMCDriver) GetLedState(ledId int32) (pluginCommon.LedState, error) {
+	var retObj pluginCommon.LedState
+	return retObj, nil
+}
+
+func (driver *openBMCDriver) GetAllLedState(states []pluginCommon.LedState, cnt int) error {
+	return nil
 }

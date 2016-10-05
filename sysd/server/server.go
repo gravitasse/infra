@@ -38,7 +38,7 @@ import (
 )
 
 type GlobalLoggingConfig struct {
-	Enable bool
+	Level sysdCommonDefs.SRDebugLevel
 }
 
 type ComponentLoggingConfig struct {
@@ -162,9 +162,10 @@ func (server *SYSDServer) PublishSysdNotifications() {
 }
 
 func (server *SYSDServer) ProcessGlobalLoggingConfig(gLogConf GlobalLoggingConfig) error {
-	server.logger.SetGlobal(gLogConf.Enable)
+	server.logger.SetLevel(gLogConf.Level)
+	server.logger.UpdateComponentLoggingInDb()
 	msg := sysdCommonDefs.GlobalLogging{
-		Enable: gLogConf.Enable,
+		Level: gLogConf.Level,
 	}
 	msgBuf, err := json.Marshal(msg)
 	if err != nil {
@@ -216,7 +217,7 @@ func (server *SYSDServer) StartServer() {
 	go server.PublishSysdNotifications()
 	// Start watchdog routine
 	go server.StartWDRoutine()
-
+	server.ReadSystemInfoFromDB()
 	server.ServerStartedCh <- true
 	// Now, wait on below channels to process
 	for {
