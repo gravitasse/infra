@@ -104,6 +104,14 @@ type QsfpState struct {
 	DataCode           string
 	Temperature        float64
 	Voltage            float64
+	CurrBER            float64
+	AccBER             float64
+	MinBER             float64
+	MaxBER             float64
+	UDF0               float64
+	UDF1               float64
+	UDF2               float64
+	UDF3               float64
 	RXPower            [QsfpNumChannel]float64
 	TXPower            [QsfpNumChannel]float64
 	TXBias             [QsfpNumChannel]float64

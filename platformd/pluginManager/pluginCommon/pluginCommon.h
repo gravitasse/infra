@@ -116,6 +116,14 @@ typedef struct qsfp_info_s {
         char VendorRev[3];
         char VendorSN[20];
         char DataCode[10];
+	float CurrBER;
+	float AccBER;
+	float MinBER;
+	float MaxBER;
+	float UDF0;
+	float UDF1;
+	float UDF2;
+	float UDF3;
 } qsfp_info_t;
 
 typedef struct qsfp_pm_info_s {

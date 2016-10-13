@@ -62,6 +62,15 @@ func (driver *openBMCVoyagerDriver) GetQsfpState(Id int32) (retObj pluginCommon.
 		retObj.TXPower[idx] = float64(qsfpInfo.TXPower[idx])
 		retObj.TXBias[idx] = float64(qsfpInfo.TXBias[idx])
 	}
+
+	retObj.CurrBER = float64(qsfpInfo.CurrBER)
+	retObj.AccBER = float64(qsfpInfo.AccBER)
+	retObj.MinBER = float64(qsfpInfo.MinBER)
+	retObj.MaxBER = float64(qsfpInfo.MaxBER)
+	retObj.UDF0 = float64(qsfpInfo.UDF0)
+	retObj.UDF1 = float64(qsfpInfo.UDF1)
+	retObj.UDF2 = float64(qsfpInfo.UDF2)
+	retObj.UDF3 = float64(qsfpInfo.UDF3)
 	return retObj, nil
 }
 

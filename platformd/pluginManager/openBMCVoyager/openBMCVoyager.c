@@ -2,55 +2,12 @@
 #include <stdlib.h>
 #include <i2cUtils.h>
 #include <string.h>
+#include <math.h>
 #include "openBMCVoyager.h"
-
-/*
-typedef struct PortData_s {
-	float 	Temperature;
-	float 	SupplyVoltage;
-	float 	RX1Power;
-	float	RX2Power;
-	float 	RX3Power;
-	float 	RX4Power;
-	float 	TX1Bias;
-	float 	TX2Bias;
-	float 	TX3Bias; 
-	float 	TX4Bias;
-	float 	TX1Power;
-	float	TX2Power;
-	float 	TX3Power;
-	float 	TX4Power;
-	float 	TempHighAlarm;
-	float 	TempLowAlarm;
-	float 	TempHighWarning;
-	float 	TempLowWarning;
-	float 	VccHighAlarm;
-	float 	VccLowAlarm;
-	float VccHighWarning;
-	float VccLowWarning;
-	float RXPowerHighAlarm;
-	float RXPowerLowAlarm;
-	float RXPowerHighWarning;
-	float RXPowerLowWarning;
-	float TXBiasHighAlarm;
-	float TXBiasLowAlarm;
-	float TXBiasHighWarning;
-	float TXBiasLowWarning;
-	float TXPowerHighAlarm;
-	float TXPowerLowAlarm;
-	float TXPowerHighWarning;
-	float TXPowerLowWarning;
-	char VendorName[20];
-	char VendorOUI [10];
-	char VendorPN[20]; 
-	char VendorRev[3];
-	char VendorSN[20];
-	char DataCode[10];
-} PortData_t;
-*/
 
 int upper_page00h=2;
 int upper_page03h=3;
+int custom_page20h=0x20;
 
 int read_eeprom(int page, int *value) {
 	int err = 0;
@@ -58,13 +15,19 @@ int read_eeprom(int page, int *value) {
 	if (page == upper_page00h) {
 		err = i2cSet(0, 0x50, 0x7f, 0x00);
 		if (err != 0) {
-			printf("Error reading eeprom %d\n", err);
+			//printf("Error reading eeprom page(%d) %d\n", page, err);
 			return err;
 		}
 	} else if (page == upper_page03h) {
 		err = i2cSet(0, 0x50, 0x7f, 0x03);
 		if (err != 0) {
-			printf("Error reading eeprom %d\n", err);
+			//printf("Error reading eeprom page(%d) %d\n", page, err);
+			return err;
+		}
+	} else if (page == custom_page20h) {
+		err = i2cSet(0, 0x50, 0x7f, page);
+		if (err != 0) {
+			//printf("Error reading eeprom page(%d) %d\n", page, err);
 			return err;
 		}
 	}
@@ -226,10 +189,83 @@ int get_data_from_upper_page00h(int page, qsfp_info_t *portData) {
 	return 0;
 }
 
+float get_ber_data(int msb, int lsb) {
+	int val = ((msb & 0xff) << 8)|(lsb & 0xff);
+	int ber_exp = (val >> 11) - 22;
+	float ber_man = (float) (val & 0x7ff)/100.0;
+	return ber_man * pow(10, ber_exp);
+}
+
+void get_ber(qsfp_info_t *portData, int *value) {
+	portData->CurrBER = get_ber_data(value[184], value[185]);
+	portData->AccBER = get_ber_data(value[178], value[179]);
+	portData->MinBER = get_ber_data(value[180], value[181]);
+	portData->MaxBER = get_ber_data(value[182], value[183]);
+}
+
+
+//Customizable fields can be used to retrive data from page 0x20h
+void get_udf0(qsfp_info_t *portData, int *value) {
+	portData->UDF0 = 0.0;
+}
+
+//Customizable fields can be used to retrive data from page 0x20h
+void get_udf1(qsfp_info_t *portData, int *value) {
+	portData->UDF1 = 0.0;
+}
+
+//Customizable fields can be used to retrive data from page 0x20h
+void get_udf2(qsfp_info_t *portData, int *value) {
+	portData->UDF2 = 0.0;
+}
+
+//Customizable fields can be used to retrive data from page 0x20h
+void get_udf3(qsfp_info_t *portData, int *value) {
+	portData->UDF3 = 0.0;
+}
+
+/* Get Data from Page 0x20 */
+int get_data_from_page20h(int page, qsfp_info_t *portData) {
+	int value[256] = {0};
+	int err = 0;
+
+	err = read_eeprom(page, value);
+	if (err != 0) {
+		return -1;
+	}
+
+	get_ber(portData, value);
+	get_udf0(portData, value);
+	get_udf1(portData, value);
+	get_udf2(portData, value);
+	get_udf3(portData, value);
+	return 0;
+}
+
+int verify_qsfp_advance_modulation() {
+	int value = 0;
+	int err = 0;
+
+	printf("Verify qsfp advance modulation\n");
+
+	err = i2cSet(0, 0x50, 0x7f, 0x0);
+	if (err != 0) {
+		printf("Error reading eeprom %d\n", err);
+		return err;
+	}
+
+	value = i2cGet(0, 0x50, 195);
+
+	if (value & 0x01) {
+		return 1;
+	}
+	return 0;
+}
+
 void printData(qsfp_info_t *portData) {
+#if 0
 	printf("Port Temperature: %f\n", portData->Temperature);
 	printf("Port SupplyVoltage: %f\n", portData->SupplyVoltage);
-#if 0
 	printf("RX1Power: %f\n", portData->RX1Power);
 	printf("RX2Power: %f\n", portData->RX2Power);
 	printf("RX3Power: %f\n", portData->RX3Power);
@@ -242,24 +278,25 @@ void printData(qsfp_info_t *portData) {
 	printf("TX2Bias: %f\n", portData->TX2Bias);
 	printf("TX3Bias: %f\n", portData->TX3Bias);
 	printf("TX4Bias: %f\n", portData->TX4Bias);
-#endif
 	printf("VendorName: %s\n", portData->VendorName);
 	printf("VendorOUI: %s\n", portData->VendorOUI);
 	printf("VendorPN: %s\n", portData->VendorPN);
 	printf("VendorRev: %s\n", portData->VendorRev);
 	printf("VendorSN: %s\n", portData->VendorSN);
 	printf("DataCode: %s\n", portData->DataCode);
+#endif
 }
 
 int GetQsfpState(qsfp_info_t *info, int port) {
 	int err = 0;
 	int bit = 0;
 
+
 	err = i2cSet(0, 0x70, 0x0, 0x00);
 	if (err != 0) {
 		printf("Error in i2cset: %d\n", err);
 		return -1;
-	}	
+	}
 	err = i2cSet(0, 0x71, 0x0, 0x00);
 	if (err != 0) {
 		printf("Error in i2cset: %d\n", err);
@@ -305,6 +342,15 @@ int GetQsfpState(qsfp_info_t *info, int port) {
 		return err;
 	}
 	//printData(info);
+	//Verify if Page 0x20h and 0x21h is supported by Module
+	//QSFP28
+	err = verify_qsfp_advance_modulation();
+	if (err != 0) {
+		err = get_data_from_page20h(0x20, info);
+		if (err != 0) {
+			return err;
+		}
+	}
 	return 0;
 }
 

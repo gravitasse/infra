@@ -287,6 +287,14 @@ func convertToRPCFmtQsfpState(obj *objects.QsfpState) *platformd.QsfpState {
 		DataCode:           obj.DataCode,
 		Temperature:        obj.Temperature,
 		Voltage:            obj.Voltage,
+		CurrBER:            obj.CurrBER,
+		AccBER:             obj.AccBER,
+		MinBER:             obj.MinBER,
+		MaxBER:             obj.MaxBER,
+		UDF0:               obj.UDF0,
+		UDF1:               obj.UDF1,
+		UDF2:               obj.UDF2,
+		UDF3:               obj.UDF3,
 	}
 }
 

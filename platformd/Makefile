@@ -21,6 +21,7 @@ CGO_CFLAGS=-I$(SR_PLATFORMD_CODE_BASE)/pluginManager/pluginCommon/
 export CGO_CFLAGS+=-I$(SR_PLATFORMD_CODE_BASE)/pluginManager/onlp/inc
 export CGO_CFLAGS+=-I$(SR_PLATFORMD_CODE_BASE)/pluginManager/openBMCVoyager
 export CGO_LDFLAGS+=-ldl -Wl,--unresolved-symbols=ignore-in-shared-libs
+export CGO_LDFLAGS+=-lm
 
 .PHONY: all
 
